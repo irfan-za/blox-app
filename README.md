@@ -36,3 +36,10 @@ Blox App is designed to streamline user and blog management. It provides a centr
 5.  **Access the application:**
 
     Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Demo Account
+
+To explore the application, you can use the following demo account:
+
+- **Email:** `irfan@gmail.com`
+- **Access Token:** `1d84ac2a788b76c25af2dcf2396cf05a1dcac21bf15705bf3eb8127970cbab94`
