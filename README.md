@@ -1,13 +1,10 @@
-# Blox App
+# BloX App
 
-A Dashboard website for managing users and blog posts.
+BloX App is designed to streamline user and blog management. It provides a centralized dashboard where his team can efficiently manage user accounts and publish blog posts. The application displays a table listing all users and blogs, accompanied by a simple chart to visualize publishing activity or user engagement. This MVP is built with the intention to evolve with additional features over time.
 
-**Description:**
+### Demo Project
 
-Blox App is designed to streamline user and blog management. It provides a centralized dashboard where his team can efficiently manage user accounts and publish blog posts. The application displays a table listing all users and blogs, accompanied by a simple chart to visualize publishing activity or user engagement. This MVP is built with the intention to evolve with additional features over time.
-**Live Demo:** [https://blox-app-gamma.vercel.app](https://blox-app-gamma.vercel.app)
-
-### Demo Account
+**Link Demo:** [https://blox-app-gamma.vercel.app](https://blox-app-gamma.vercel.app)
 
 To explore the application, you can use the following demo account:
 

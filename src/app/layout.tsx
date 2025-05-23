@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BloX App",
   description:
-    "Manage users & blogs efficiently with Blox App. A centralized dashboard for streamlined content creation and user account management.",
+    "Manage users & blogs efficiently with BloX App. A centralized dashboard for streamlined content creation and user account management.",
 };
 
 export default function RootLayout({
