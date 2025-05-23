@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blox App
+
+A Dashboard website for managing users and blog posts.
+
+**Description:**
+
+Blox App is designed to streamline user and blog management. It provides a centralized dashboard where his team can efficiently manage user accounts and publish blog posts. The application displays a table listing all users and blogs, accompanied by a simple chart to visualize publishing activity or user engagement. This MVP is built with the intention to evolve with additional features over time.
 
 ## Getting Started
 
-First, run the development server:
+1.  **Clone the repository:**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+    ```bash
+    git clone https://github.com/irfan-za/blox-app.git
+    cd blox-app
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Install dependencies:**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+    ```bash
+    pnpm install
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3.  **Environment Configuration:**
 
-## Learn More
+    - Create a `.env` file by copying the contents of `.env.example`.
+    - Obtain a GoRest access token from [https://gorest.co.in](https://gorest.co.in) (login required).
+    - Assign the token to the `GOREST_ACCESS_TOKEN` variable in your `.env` file.
 
-To learn more about Next.js, take a look at the following resources:
+4.  **Run the development server:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    ```bash
+    pnpm dev
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5.  **Access the application:**
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
