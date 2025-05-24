@@ -52,12 +52,13 @@ const UserTable: React.FC<UserTableProps> = ({
     const params = new URLSearchParams(searchParams.toString());
     const page = tableParams.pagination.current || 1;
     const per_page = tableParams.pagination.pageSize || 10;
+    console.log(per_page, "🚀🚀🚀");
 
     params.set("page", String(page));
     params.set("per_page", String(per_page));
-    if (genderFilter) params.set("gender", genderFilter);
-    if (statusFilter) params.set("status", statusFilter);
-    if (searchText) params.set("name", searchText);
+    params.set("gender", genderFilter ?? "");
+    params.set("status", statusFilter ?? "");
+    params.set("name", searchText);
 
     const users = await fetchUsersAction(page, per_page, {
       gender: genderFilter ?? "",
@@ -69,6 +70,8 @@ const UserTable: React.FC<UserTableProps> = ({
 
     return {
       data: users.data,
+      current: page,
+      pageSize: per_page,
       total: users.total,
     };
   };
@@ -76,7 +79,12 @@ const UserTable: React.FC<UserTableProps> = ({
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["users", tableParams, genderFilter, statusFilter, searchText],
     queryFn: fetchUsers,
-    initialData: { data: initialData, total: initialTotal },
+    initialData: {
+      data: initialData,
+      current: 1,
+      pageSize: 10,
+      total: initialTotal,
+    },
   });
 
   const handleTableChange = (
@@ -90,6 +98,10 @@ const UserTable: React.FC<UserTableProps> = ({
       },
       filters,
     });
+
+    setTimeout(() => {
+      refetch();
+    }, 400);
   };
 
   const debouncedFilter = useMemo(() => {
@@ -125,6 +137,7 @@ const UserTable: React.FC<UserTableProps> = ({
       dataIndex: "id",
       key: "id",
       width: "10%",
+      sorter: (a, b) => a.id - b.id,
       render: (id) => <span>#{id}</span>,
     },
     {
@@ -132,18 +145,21 @@ const UserTable: React.FC<UserTableProps> = ({
       dataIndex: "name",
       key: "name",
       width: "20%",
+      sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
       width: "30%",
+      sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
       title: "Gender",
       dataIndex: "gender",
       key: "gender",
       width: "15%",
+      sorter: (a, b) => a.gender.localeCompare(b.gender),
       render: (gender) => <span className="capitalize">{gender}</span>,
     },
     {
@@ -151,6 +167,7 @@ const UserTable: React.FC<UserTableProps> = ({
       dataIndex: "status",
       key: "status",
       width: "15%",
+      sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status) => <span className="capitalize text-sm">{status}</span>,
     },
     {
@@ -192,7 +209,7 @@ const UserTable: React.FC<UserTableProps> = ({
 
   return (
     <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
-      <div className="mb-4 flex flex-wrap gap-4 justify-between">
+      <div className="mb-4 flex flex-wrap flex-col md:flex-row gap-4 justify-between">
         <div className="flex flex-wrap gap-4">
           <Select
             placeholder="Gender"
@@ -202,7 +219,7 @@ const UserTable: React.FC<UserTableProps> = ({
               debouncedFilter();
             }}
             allowClear
-            style={{ width: 120 }}
+            className="w-28 md:w-32"
             options={[
               { value: "male", label: "Male" },
               { value: "female", label: "Female" },
@@ -216,7 +233,7 @@ const UserTable: React.FC<UserTableProps> = ({
               debouncedFilter();
             }}
             allowClear
-            style={{ width: 120 }}
+            className="w-28 md:w-32"
             options={[
               { value: "active", label: "Active" },
               { value: "inactive", label: "Inactive" },
@@ -229,7 +246,7 @@ const UserTable: React.FC<UserTableProps> = ({
             value={searchText}
             onChange={handleSearch}
             suffix={<SearchOutlined />}
-            style={{ width: 200 }}
+            className="w-60 md:w-80"
           />
         </Space>
       </div>
@@ -238,9 +255,11 @@ const UserTable: React.FC<UserTableProps> = ({
         dataSource={data?.data}
         rowKey="id"
         loading={isLoading}
-        className=" bg-background"
+        className="bg-background"
         pagination={{
-          ...tableParams.pagination,
+          current: data.current,
+          pageSize: data.pageSize,
+          total: data?.total,
           showSizeChanger: true,
           showTotal: (total) =>
             `1-${tableParams.pagination.pageSize} of ${total} items`,
