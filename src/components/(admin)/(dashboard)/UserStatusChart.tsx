@@ -18,36 +18,22 @@ const UserStatusChart = ({
       trigger: "item",
       formatter: "{b}: {c} ({d}%)",
     },
-    series: [
-      {
-        name: "Non Active Users",
-        type: "pie",
-        radius: ["30%", "45%"],
-        center: ["50%", "50%"],
-        labelLine: {
-          show: false,
-        },
-        label: {
-          show: false,
-        },
-        data: [
-          {
-            value: totalNonActiveUser,
-            name: "Non Active",
-            itemStyle: { color: "#36A2EB" },
-          },
-          {
-            value: totalActiveUser,
-            name: "Active Users",
-            itemStyle: { color: "#E8E8E8" },
-          },
-        ],
+    legend: {
+      bottom: "10%",
+      right: "10%",
+      orient: "vertical",
+      itemWidth: 10,
+      itemHeight: 10,
+      formatter: (name: string) => {
+        return `${name}`;
       },
+    },
+    series: [
       {
         name: "Active Users",
         type: "pie",
         radius: ["55%", "70%"],
-        center: ["50%", "50%"],
+        center: ["30%", "50%"],
 
         labelLine: {
           show: false,
@@ -68,6 +54,50 @@ const UserStatusChart = ({
           },
         ],
       },
+      {
+        name: "Non Active Users",
+        type: "pie",
+        radius: ["30%", "45%"],
+        center: ["30%", "50%"],
+        labelLine: {
+          show: false,
+        },
+        label: {
+          show: false,
+        },
+        data: [
+          {
+            value: totalNonActiveUser,
+            name: "Non Active",
+            itemStyle: { color: "#36A2EB" },
+          },
+          {
+            value: totalActiveUser,
+            name: "Active",
+            itemStyle: { color: "#E8E8E8" },
+          },
+        ],
+      },
+      {
+        type: "gauge",
+        radius: "30%",
+        center: ["80%", "50%"],
+        zlevel: 1,
+        detail: {
+          formatter: `${totalActiveUser}/${totalUsers}`,
+          offsetCenter: [0, 0],
+          fontSize: 16,
+          fontWeight: "bold",
+          color: "#6b7280",
+        },
+        data: [{ value: 0 }],
+        title: { show: false },
+        pointer: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        axisLabel: { show: false },
+      },
     ],
   };
 
@@ -77,25 +107,11 @@ const UserStatusChart = ({
       size="small"
       title="User Status"
     >
-      <div className="flex h-48 justify-between ">
+      <div className="h-48 ">
         <ReactECharts
           option={option}
           style={{ height: "100%", width: "100%" }}
         />
-        <div className=" flex flex-1 w-full justify-center flex-col">
-          <p className="text-muted-foreground text-xl font-bold mb-4">
-            <span className="text-foreground">{totalActiveUser}</span>/
-            {totalUsers}
-          </p>
-          <div className="flex items-center mr-4">
-            <div className="w-3 h-3 bg-[#5AD8A6] mr-1"></div>
-            <span className="text-xs text-nowrap">Active</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-[#36A2EB] mr-1"></div>
-            <span className="text-xs text-nowrap">Non Active</span>
-          </div>
-        </div>
       </div>
     </Card>
   );

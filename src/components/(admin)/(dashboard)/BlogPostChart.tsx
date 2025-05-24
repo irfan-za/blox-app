@@ -38,6 +38,15 @@ const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
         show: false,
       },
     },
+    legend: {
+      bottom: -6,
+      left: "center",
+      itemWidth: 10,
+      itemHeight: 10,
+      formatter: () => {
+        return `Total posts`;
+      },
+    },
     series: [
       {
         name: "Total Post",
@@ -55,13 +64,13 @@ const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
       className="shadow-sm rounded-lg border border-border"
       title="Blog Post Quantity"
     >
-      <div className="h-[28rem]">
+      <div className="h-72 md:h-[28rem]">
         <ReactECharts
           option={option}
           style={{ height: "100%", width: "100%" }}
         />
       </div>
-      <div className="text-center text-xs mt-2 text-gray-500">User Name</div>
+      <span className=" text-xs mt-2 text-gray-500">User Name</span>
     </Card>
   );
 };
