@@ -3,19 +3,13 @@ import React from "react";
 import { Card } from "antd";
 import ReactECharts from "echarts-for-react";
 
-const BlogPostChart = () => {
-  const userData = [
-    { name: "NuHk", value: 55 },
-    { name: "Madona", value: 65 },
-    { name: "John", value: 75 },
-    { name: "Doe", value: 78 },
-    { name: "Catty", value: 82 },
-    { name: "Johnson", value: 88 },
-    { name: "Gary", value: 93 },
-    { name: "Jerry", value: 102 },
-    { name: "XiJuan", value: 103 },
-  ];
+interface UserPost {
+  id: string;
+  name: string;
+  value: number;
+}
 
+const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
   const option = {
     tooltip: {
       trigger: "axis",
@@ -31,7 +25,7 @@ const BlogPostChart = () => {
     },
     xAxis: {
       type: "category",
-      data: userData.map((item) => item.name),
+      data: userPosts.map((item) => item.name),
       axisLabel: {
         interval: 0,
         rotate: 0,
@@ -39,7 +33,7 @@ const BlogPostChart = () => {
     },
     yAxis: {
       type: "value",
-      max: 120,
+      max: 5,
       axisLine: {
         show: false,
       },
@@ -48,7 +42,7 @@ const BlogPostChart = () => {
       {
         name: "Total Post",
         type: "bar",
-        data: userData.map((item) => item.value),
+        data: userPosts.map((item) => item.value),
         itemStyle: {
           color: "#5AD8A6",
         },
@@ -57,8 +51,8 @@ const BlogPostChart = () => {
   };
 
   return (
-    <Card className="shadow-sm" title="Blog Post Quantity">
-      <div className="h-[350px]">
+    <Card className="shadow-sm border border-border" title="Blog Post Quantity">
+      <div className="h-[28rem]">
         <ReactECharts
           option={option}
           style={{ height: "100%", width: "100%" }}

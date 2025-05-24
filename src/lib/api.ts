@@ -97,6 +97,11 @@ export const usersApi = {
       total: parseInt(response.headers["x-pagination-total"] || "0"),
     };
   },
+  getUserTotalPosts: async (userId: number) => {
+    const client = await goRestApiClient();
+    const response = await client.get(`/users/${userId}/posts`);
+    return parseInt(response.headers["x-pagination-total"] || "0");
+  },
   postUsers: async (email: string) => {
     const client = await goRestApiClient();
     const response = await client.post(`/users`, {

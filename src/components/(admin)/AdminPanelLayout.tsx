@@ -40,7 +40,7 @@ export default function AdminPanelLayout({
           className={`
           transition-all duration-300
           fixed md:relative
-          h-full
+          h-full z-10
           ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
         >

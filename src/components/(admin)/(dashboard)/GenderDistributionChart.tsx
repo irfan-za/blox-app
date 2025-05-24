@@ -3,10 +3,20 @@ import React from "react";
 import { Card } from "antd";
 import ReactECharts from "echarts-for-react";
 
-const GenderDistributionChart = () => {
+interface UserStatusChartProps {
+  totalMaleUsers: number;
+  totalFemaleUsers: number;
+  totalUsers: number;
+}
+const GenderDistributionChart = ({
+  totalMaleUsers,
+  totalFemaleUsers,
+  totalUsers,
+}: UserStatusChartProps) => {
   const option = {
     tooltip: {
       trigger: "item",
+      formatter: "{b}: {c} ({d}%)",
     },
     legend: {
       bottom: "0",
@@ -14,50 +24,51 @@ const GenderDistributionChart = () => {
       itemWidth: 10,
       itemHeight: 10,
       formatter: (name: string) => {
-        return name === "Male" ? "(25) Male" : "(25) Female";
+        return name === "Male"
+          ? `(${totalMaleUsers}) Male`
+          : `(${totalFemaleUsers}) Female`;
       },
     },
     series: [
       {
         name: "Gender Distribution",
         type: "pie",
-        radius: ["40%", "70%"],
-        center: ["50%", "45%"],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 0,
-          borderColor: "#fff",
-          borderWidth: 2,
+        radius: ["45%", "70%"],
+        center: ["50%", "50%"],
+        labelLine: {
+          show: false,
         },
         label: {
-          show: false,
+          show: true,
           position: "center",
           formatter: () => {
-            return "Total\n120";
+            return "Total\n" + totalUsers;
           },
           fontSize: "14",
           fontWeight: "bold",
         },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: "16",
-            fontWeight: "bold",
-          },
-        },
-        labelLine: {
-          show: false,
-        },
         data: [
-          { value: 50, name: "Male", itemStyle: { color: "#554BF1" } },
-          { value: 50, name: "Female", itemStyle: { color: "#F178B6" } },
+          {
+            value: totalMaleUsers,
+            name: "Male",
+            itemStyle: { color: "#7951a9" },
+          },
+          {
+            value: totalFemaleUsers,
+            name: "Female",
+            itemStyle: { color: "#4682b4" },
+          },
         ],
       },
     ],
   };
 
   return (
-    <Card className="shadow-sm" title="Post Distribution by Gender">
+    <Card
+      className="shadow-sm h-fit border border-border"
+      size="small"
+      title="Post Distribution by Gender"
+    >
       <div className="h-[250px]">
         <ReactECharts
           option={option}

@@ -3,15 +3,26 @@ import BlogPostChart from "@/components/(admin)/(dashboard)/BlogPostChart";
 import UserStatusChart from "@/components/(admin)/(dashboard)/UserStatusChart";
 import GenderDistributionChart from "@/components/(admin)/(dashboard)/GenderDistributionChart";
 import { postsApi, usersApi } from "@/lib/api";
+import { User } from "@/types";
 
 export default async function DashboardPage() {
-  const users = await usersApi.getUsers({});
+  const users = await usersApi.getUsers({ page: 1, per_page: 7 });
   const activeUsers = await usersApi.getUsers({ query: { status: "active" } });
+  const maleUsers = await usersApi.getUsers({ query: { gender: "male" } });
   const totalUsers = users.total;
   const totalActiveUsers = activeUsers.total;
-  const maleUsers = await usersApi.getUsers({ query: { gender: "male" } });
   const totalMaleUsers = maleUsers.total;
   const totalPosts = await postsApi.getTotalPosts();
+  const userPosts = await Promise.all(
+    users.data.map(async (user: User) => {
+      const totalPosts = await usersApi.getUserTotalPosts(user.id);
+      return {
+        id: user.id,
+        name: user.name.split(" ")[0],
+        value: totalPosts,
+      };
+    })
+  );
 
   return (
     <div>
@@ -32,12 +43,20 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <BlogPostChart />
+        <div className="lg:col-span-2 ">
+          <BlogPostChart userPosts={userPosts} />
         </div>
-        <div className="lg:col-span-1 grid grid-rows-2 gap-4">
-          <UserStatusChart />
-          <GenderDistributionChart />
+        <div className="lg:col-span-1 gap-4 grid grid-row-2">
+          <UserStatusChart
+            totalActiveUser={totalActiveUsers}
+            totalNonActiveUser={totalUsers - totalActiveUsers}
+            totalUsers={totalUsers}
+          />
+          <GenderDistributionChart
+            totalMaleUsers={totalMaleUsers}
+            totalFemaleUsers={totalUsers - totalMaleUsers}
+            totalUsers={totalUsers}
+          />
         </div>
       </div>
     </div>
