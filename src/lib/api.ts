@@ -30,12 +30,26 @@ export const authApi = {
 };
 
 export const postsApi = {
-  getPosts: async (page: number = 1, per_page: number = 10) => {
+  getPosts: async ({
+    page = 1,
+    per_page = 10,
+    query = {},
+  }: {
+    page?: number;
+    per_page?: number;
+    query?: Record<string, string>;
+  } = {}) => {
     const client = await goRestApiClient();
-    const response = await client.get(
-      `/posts?page=${page}&per_page=${per_page}`
-    );
-    return response.data;
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: per_page.toString(),
+      ...query,
+    });
+    const response = await client.get(`/posts?${params.toString()}`);
+    return {
+      data: response.data,
+      total: parseInt(response.headers["x-pagination-total"] || "0"),
+    };
   },
   getTotalPosts: async () => {
     const client = await goRestApiClient();

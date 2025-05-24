@@ -51,7 +51,10 @@ const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
   };
 
   return (
-    <Card className="shadow-sm border border-border" title="Blog Post Quantity">
+    <Card
+      className="shadow-sm rounded-lg border border-border"
+      title="Blog Post Quantity"
+    >
       <div className="h-[28rem]">
         <ReactECharts
           option={option}

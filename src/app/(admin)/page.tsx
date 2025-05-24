@@ -2,6 +2,7 @@ import StatisticCard from "@/components/(admin)/(dashboard)/StatisticCard";
 import BlogPostChart from "@/components/(admin)/(dashboard)/BlogPostChart";
 import UserStatusChart from "@/components/(admin)/(dashboard)/UserStatusChart";
 import GenderDistributionChart from "@/components/(admin)/(dashboard)/GenderDistributionChart";
+import TabledData from "@/components/(admin)/(dashboard)/TabledData";
 import { postsApi, usersApi } from "@/lib/api";
 import { User } from "@/types";
 
@@ -24,6 +25,15 @@ export default async function DashboardPage() {
     })
   );
 
+  const initialUsersData = await usersApi.getUsers({
+    page: 1,
+    per_page: 10,
+  });
+  const initialPostsData = await postsApi.getPosts({
+    page: 1,
+    per_page: 10,
+  });
+
   return (
     <div>
       <div className="mb-4">
@@ -42,7 +52,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="lg:col-span-2 ">
           <BlogPostChart userPosts={userPosts} />
         </div>
@@ -58,6 +68,16 @@ export default async function DashboardPage() {
             totalUsers={totalUsers}
           />
         </div>
+      </div>
+
+      <div className="mb-4">
+        <h2 className="text-xl font-medium mb-4">Manage Data</h2>
+        <TabledData
+          initialUsers={initialUsersData.data}
+          initialTotalUsers={initialUsersData.total}
+          initialPosts={initialPostsData.data}
+          initialTotalPosts={initialPostsData.total}
+        />
       </div>
     </div>
   );

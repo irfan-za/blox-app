@@ -13,6 +13,7 @@ import React, { useState } from "react";
 import AdminNavbar from "./AdminNavbar";
 import { cn } from "@/lib/utils";
 import AdminHeader from "./AdminHeader";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const { Sider, Content } = Layout;
 export default function AdminPanelLayout({
   children,
@@ -27,86 +28,97 @@ export default function AdminPanelLayout({
     setMobileOpen(!mobileOpen);
     setCollapsed(!collapsed);
   };
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: 1,
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  });
 
   return (
-    <div className="flex flex-col h-svh">
-      <AdminNavbar onMenuClick={handleMenuClick} />
-      <Layout>
-        <Sider
-          theme="light"
-          collapsed={collapsed}
-          collapsible
-          trigger={null}
-          className={`
+    <QueryClientProvider client={queryClient}>
+      <div className="flex flex-col h-svh">
+        <AdminNavbar onMenuClick={handleMenuClick} />
+        <Layout>
+          <Sider
+            theme="light"
+            collapsed={collapsed}
+            collapsible
+            trigger={null}
+            className={`
           transition-all duration-300
           fixed md:relative
           h-full z-10
           ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
-        >
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="absolute right-[-12px] top-6 hidden md:flex items-center justify-center h-6 w-6 bg-white rounded-full border"
           >
-            {collapsed ? <RightOutlined /> : <LeftOutlined />}
-          </button>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="absolute right-[-12px] top-6 hidden md:flex items-center justify-center h-6 w-6 bg-white rounded-full border"
+            >
+              {collapsed ? <RightOutlined /> : <LeftOutlined />}
+            </button>
 
-          <div className="mx-4 my-6">
-            <div className="mb-6">
-              <h3
-                className={cn("font-semibold", {
-                  hidden: collapsed,
-                })}
-              >
-                Dashboard
-              </h3>
-              <Menu
-                mode="vertical"
-                selectedKeys={[pathname === "/" ? "dashboard" : ""]}
-                items={[
-                  {
-                    key: "dashboard",
-                    icon: <LayoutOutlined />,
-                    label: <Link href="/">Dashboard</Link>,
-                  },
-                ]}
-              />
+            <div className="mx-4 my-6">
+              <div className="mb-6">
+                <h3
+                  className={cn("font-semibold", {
+                    hidden: collapsed,
+                  })}
+                >
+                  Dashboard
+                </h3>
+                <Menu
+                  mode="vertical"
+                  selectedKeys={[pathname === "/" ? "dashboard" : ""]}
+                  items={[
+                    {
+                      key: "dashboard",
+                      icon: <LayoutOutlined />,
+                      label: <Link href="/">Dashboard</Link>,
+                    },
+                  ]}
+                />
+              </div>
+
+              <div>
+                <h3
+                  className={cn("font-semibold", {
+                    hidden: collapsed,
+                  })}
+                >
+                  Blog Management
+                </h3>
+                <Menu
+                  mode="vertical"
+                  selectedKeys={[pathname.replace("/", "")]}
+                  items={[
+                    {
+                      key: "create-user",
+                      icon: <UserOutlined />,
+                      label: <Link href="/create-user">Create User</Link>,
+                    },
+                    {
+                      key: "create-post",
+                      icon: <FormOutlined />,
+                      label: <Link href="/create-post">Create Post</Link>,
+                    },
+                  ]}
+                />
+              </div>
             </div>
+          </Sider>
 
-            <div>
-              <h3
-                className={cn("font-semibold", {
-                  hidden: collapsed,
-                })}
-              >
-                Blog Management
-              </h3>
-              <Menu
-                mode="vertical"
-                selectedKeys={[pathname.replace("/", "")]}
-                items={[
-                  {
-                    key: "create-user",
-                    icon: <UserOutlined />,
-                    label: <Link href="/create-user">Create User</Link>,
-                  },
-                  {
-                    key: "create-post",
-                    icon: <FormOutlined />,
-                    label: <Link href="/create-post">Create Post</Link>,
-                  },
-                ]}
-              />
-            </div>
-          </div>
-        </Sider>
+          <Content className="p-6 md:ml-0 transition-all duration-300 overflow-y-auto">
+            <AdminHeader />
 
-        <Content className="p-6 md:ml-0 transition-all duration-300 overflow-y-auto">
-          <AdminHeader />
-
-          {children}
-        </Content>
-      </Layout>
-    </div>
+            {children}
+          </Content>
+        </Layout>
+      </div>
+    </QueryClientProvider>
   );
 }
