@@ -7,7 +7,7 @@ export default function AdminLayout({
 }>) {
   return (
     <AdminPanelLayout>
-      <main className="border-2 border-red-500">{children}</main>
+      <main>{children}</main>
     </AdminPanelLayout>
   );
 }

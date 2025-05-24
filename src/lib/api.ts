@@ -26,6 +26,10 @@ export const authApi = {
     const response = await internalApiClient.get("/auth/logout");
     return response.data;
   },
+  me: async () => {
+    const response = await internalApiClient.get("/auth/me");
+    return response.data;
+  },
 };
 
 export const postsApi = {

@@ -10,8 +10,9 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
-import Navbar from "./Navbar";
+import AdminNavbar from "./AdminNavbar";
 import { cn } from "@/lib/utils";
+import AdminHeader from "./AdminHeader";
 const { Sider, Content } = Layout;
 export default function AdminPanelLayout({
   children,
@@ -28,9 +29,9 @@ export default function AdminPanelLayout({
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar onMenuClick={handleMenuClick} />
-      <Layout className="min-h-screen">
+    <div className="flex flex-col h-svh">
+      <AdminNavbar onMenuClick={handleMenuClick} />
+      <Layout>
         <Sider
           theme="light"
           collapsed={collapsed}
@@ -100,7 +101,9 @@ export default function AdminPanelLayout({
           </div>
         </Sider>
 
-        <Content className="p-6 md:ml-0 transition-all duration-300">
+        <Content className="p-6 md:ml-0 transition-all duration-300 overflow-y-auto">
+          <AdminHeader />
+
           {children}
         </Content>
       </Layout>

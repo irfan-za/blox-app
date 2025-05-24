@@ -11,6 +11,31 @@ To explore the application, you can use the following demo account:
 - **Email:** `irfan@gmail.com`
 - **Access Token:** `1d84ac2a788b76c25af2dcf2396cf05a1dcac21bf15705bf3eb8127970cbab94`
 
+## Features
+
+- **Secure Authentication**
+
+  - Flexible session management with "Remember Me" option
+  - 30-day token validity when "Remember Me" is enabled
+  - 24-hour token validity for standard login
+
+- **Responsive Design**
+
+  - Optimized user interface for all screen sizes
+  - Seamless experience across desktop, tablet, and mobile devices
+  - Consistent layout and functionality on all platforms
+
+- **Blog Management**
+
+  - Create, edit, and delete blog posts
+  - Rich text editor for content creation
+  - Post status management (draft/published)
+
+- **User Management**
+  - Comprehensive user data administration
+  - User profile creation and updates
+  - User activity tracking and management
+
 ## Getting Started
 
 1.  **Clone the repository:**
