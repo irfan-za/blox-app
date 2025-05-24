@@ -1,5 +1,6 @@
 import { LoginFormValues } from "@/types";
 import axios from "axios";
+import { createGoRestApiClient } from "./gorest-client";
 
 export const internalApiClient = axios.create({
   baseURL: "/api",
@@ -8,13 +9,9 @@ export const internalApiClient = axios.create({
   },
 });
 
-export const goRestApiClient = axios.create({
-  baseURL: process.env.API_URL,
-  headers: {
-    "Content-Type": "application/json",
-    // Authorization: `Bearer ${accessToken}`,
-  },
-});
+export const goRestApiClient = async () => {
+  return await createGoRestApiClient();
+};
 
 export const authApi = {
   login: async (credentials: LoginFormValues) => {
@@ -34,14 +31,21 @@ export const authApi = {
 
 export const postsApi = {
   getPosts: async (page: number = 1, per_page: number = 10) => {
-    const response = await goRestApiClient.get(
+    const client = await goRestApiClient();
+    const response = await client.get(
       `/posts?page=${page}&per_page=${per_page}`
     );
     return response.data;
   },
+  getTotalPosts: async () => {
+    const client = await goRestApiClient();
+    const response = await client.get("/posts");
+    return parseInt(response.headers["x-pagination-total"] || "0");
+  },
 
   getPost: async (id: number) => {
-    const response = await goRestApiClient.get(`/posts/${id}`);
+    const client = await goRestApiClient();
+    const response = await client.get(`/posts/${id}`);
     return response.data;
   },
 
@@ -50,7 +54,8 @@ export const postsApi = {
     body: string;
     user_id: number;
   }) => {
-    const response = await goRestApiClient.post("/posts", post);
+    const client = await goRestApiClient();
+    const response = await client.post("/posts", post);
     return response.data;
   },
 
@@ -58,25 +63,43 @@ export const postsApi = {
     id: number,
     post: { title: string; body: string; user_id: number }
   ) => {
-    const response = await goRestApiClient.put(`/posts/${id}`, post);
+    const client = await goRestApiClient();
+    const response = await client.put(`/posts/${id}`, post);
     return response.data;
   },
 
   deletePost: async (id: number) => {
-    const response = await goRestApiClient.delete(`/posts/${id}`);
+    const client = await goRestApiClient();
+    const response = await client.delete(`/posts/${id}`);
     return response.data;
   },
 };
 
 export const usersApi = {
-  getUsers: async (page: number = 1, per_page: number = 10) => {
-    const response = await goRestApiClient.get(
-      `/users?page=${page}&per_page=${per_page}`
-    );
-    return response.data;
+  getUsers: async ({
+    page = 1,
+    per_page = 10,
+    query = {},
+  }: {
+    page?: number;
+    per_page?: number;
+    query?: Record<string, string>;
+  } = {}) => {
+    const client = await goRestApiClient();
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: per_page.toString(),
+      ...query,
+    });
+    const response = await client.get(`/users?${params.toString()}`);
+    return {
+      data: response.data,
+      total: parseInt(response.headers["x-pagination-total"] || "0"),
+    };
   },
   postUsers: async (email: string) => {
-    const response = await goRestApiClient.post(`/users`, {
+    const client = await goRestApiClient();
+    const response = await client.post(`/users`, {
       email,
     });
     return response.data;

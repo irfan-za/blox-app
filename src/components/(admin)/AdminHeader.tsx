@@ -12,7 +12,7 @@ export default function AdminHeader() {
       <p className="text-primary text-sm">
         <LayoutOutlined className="mr-1" />
         <span>Dashboard</span>
-        <span className="text-foreground">{pathname}</span>
+        <span className="text-foreground">{pathname !== "/" && pathname}</span>
       </p>
       <div className="border-b border-border my-4"></div>
     </div>
