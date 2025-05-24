@@ -6,7 +6,11 @@ import TabledData from "@/components/(admin)/(dashboard)/TabledData";
 import { postsApi, usersApi } from "@/lib/api";
 import { User } from "@/types";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const users = await usersApi.getUsers({ page: 1, per_page: 7 });
   const activeUsers = await usersApi.getUsers({ query: { status: "active" } });
   const maleUsers = await usersApi.getUsers({ query: { gender: "male" } });
@@ -24,14 +28,22 @@ export default async function DashboardPage() {
       };
     })
   );
-
+  const { page, per_page, gender, status, name, title } = await searchParams;
   const initialUsersData = await usersApi.getUsers({
-    page: 1,
-    per_page: 10,
+    page: page ? Number(page) : 1,
+    per_page: per_page ? Number(per_page) : 10,
+    query: {
+      gender: gender ?? "",
+      status: status ?? "",
+      name: name ?? "",
+    },
   });
   const initialPostsData = await postsApi.getPosts({
-    page: 1,
-    per_page: 10,
+    page: page ? Number(page) : 1,
+    per_page: per_page ? Number(per_page) : 10,
+    query: {
+      title: title ?? "",
+    },
   });
 
   return (
@@ -71,7 +83,6 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mb-4">
-        <h2 className="text-xl font-medium mb-4">Manage Data</h2>
         <TabledData
           initialUsers={initialUsersData.data}
           initialTotalUsers={initialUsersData.total}

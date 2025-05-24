@@ -103,7 +103,7 @@ const UserStatusChart = ({
 
   return (
     <Card
-      className="shadow-sm h-fit border rounded-lg border-border"
+      className="shadow-sm h-fit rounded-lg border border-border bg-card"
       size="small"
       title="User Status"
     >

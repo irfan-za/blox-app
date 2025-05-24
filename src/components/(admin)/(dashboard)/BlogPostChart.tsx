@@ -20,7 +20,7 @@ const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
     grid: {
       left: "3%",
       right: "4%",
-      bottom: "3%",
+      bottom: "7%",
       containLabel: true,
     },
     xAxis: {
@@ -61,7 +61,7 @@ const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
 
   return (
     <Card
-      className="shadow-sm rounded-lg border border-border"
+      className="shadow-sm rounded-lg border border-border bg-card"
       title="Blog Post Quantity"
     >
       <div className="h-72 md:h-[28rem]">

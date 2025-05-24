@@ -41,22 +41,16 @@ const PostTable: React.FC<PostTableProps> = ({
   const fetchPosts = async () => {
     const params = new URLSearchParams();
 
-    // Add pagination
     params.append("page", String(tableParams.pagination.current));
     params.append("per_page", String(tableParams.pagination.pageSize));
 
-    // Add filters
     if (searchText) params.append("title", searchText);
 
     const response = await axios.get("https://gorest.co.in/public/v2/posts", {
       params,
-      headers: {
-        // Add your API token if needed
-        // Authorization: 'Bearer YOUR_TOKEN'
-      },
+      headers: {},
     });
 
-    // GoRest API returns total count in header
     const total =
       Number(response.headers["x-pagination-total"]) || response.data.length;
 
@@ -92,18 +86,6 @@ const PostTable: React.FC<PostTableProps> = ({
         ...tableParams.pagination,
         current: 1,
       },
-    });
-    refetch();
-  };
-
-  const handleReset = () => {
-    setSearchText("");
-    setTableParams({
-      pagination: {
-        current: 1,
-        pageSize: 10,
-      },
-      filters: {},
     });
     refetch();
   };
@@ -182,9 +164,8 @@ const PostTable: React.FC<PostTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
+    <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
       <div className="mb-4 flex flex-wrap gap-4 justify-between">
-        <Button onClick={handleReset}>Reset</Button>
         <Space>
           <Input
             placeholder="Search title"

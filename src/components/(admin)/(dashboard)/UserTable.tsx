@@ -1,12 +1,13 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Table, Input, Select, Button, Space, Dropdown } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue } from "antd/es/table/interface";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { User } from "@/types";
+import { useSearchParams } from "next/navigation";
+import { fetchUsersAction } from "@/server/actions";
 
 interface UserTableProps {
   initialData?: User[];
@@ -22,50 +23,53 @@ const UserTable: React.FC<UserTableProps> = ({
   initialData = [],
   initialTotal = 0,
 }) => {
-  const [searchText, setSearchText] = useState("");
+  const searchParams = useSearchParams();
+  const currentPage = searchParams.get("page")
+    ? parseInt(searchParams.get("page") || "1")
+    : 1;
+  const currentPerPage = searchParams.get("per_page")
+    ? parseInt(searchParams.get("per_page") || "10")
+    : 10;
+  const [genderFilter, setGenderFilter] = useState<string | null>(
+    searchParams.get("gender") || null
+  );
+  const [statusFilter, setStatusFilter] = useState<string | null>(
+    searchParams.get("status") || null
+  );
+  const [searchText, setSearchText] = useState<string>(
+    searchParams.get("name") || ""
+  );
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
-      current: 1,
-      pageSize: 10,
+      current: currentPage,
+      pageSize: currentPerPage,
       total: initialTotal,
     },
     filters: {},
   });
 
-  const [genderFilter, setGenderFilter] = useState<string | undefined>(
-    undefined
-  );
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(
-    undefined
-  );
-
   const fetchUsers = async () => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
+    const page = tableParams.pagination.current || 1;
+    const per_page = tableParams.pagination.pageSize || 10;
 
-    // Add pagination
-    params.append("page", String(tableParams.pagination.current));
-    params.append("per_page", String(tableParams.pagination.pageSize));
+    params.set("page", String(page));
+    params.set("per_page", String(per_page));
+    if (genderFilter) params.set("gender", genderFilter);
+    if (statusFilter) params.set("status", statusFilter);
+    if (searchText) params.set("name", searchText);
 
-    // Add filters
-    if (genderFilter) params.append("gender", genderFilter);
-    if (statusFilter) params.append("status", statusFilter);
-    if (searchText) params.append("name", searchText);
-
-    const response = await axios.get("https://gorest.co.in/public/v2/users", {
-      params,
-      headers: {
-        // Add your API token if needed
-        // Authorization: 'Bearer YOUR_TOKEN'
-      },
+    const users = await fetchUsersAction(page, per_page, {
+      gender: genderFilter ?? "",
+      status: statusFilter ?? "",
+      name: searchText,
     });
 
-    // GoRest API returns total count in header
-    const total =
-      Number(response.headers["x-pagination-total"]) || response.data.length;
+    window.history.replaceState({}, "", `?${params.toString()}`);
 
     return {
-      data: response.data,
-      total,
+      data: users.data,
+      total: users.total,
     };
   };
 
@@ -88,30 +92,32 @@ const UserTable: React.FC<UserTableProps> = ({
     });
   };
 
-  const handleSearch = () => {
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        current: 1,
-      },
-    });
-    refetch();
-  };
+  const debouncedFilter = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
 
-  const handleReset = () => {
-    setSearchText("");
-    setGenderFilter(undefined);
-    setStatusFilter(undefined);
-    setTableParams({
-      pagination: {
-        current: 1,
-        pageSize: 10,
-      },
-      filters: {},
-    });
-    refetch();
-  };
+    return () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setTableParams({
+          ...tableParams,
+          pagination: {
+            ...tableParams.pagination,
+            current: 1,
+          },
+        });
+        refetch();
+      }, 400);
+    };
+  }, [tableParams, refetch]);
+
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = e.target;
+      setSearchText(value);
+      debouncedFilter();
+    },
+    [debouncedFilter]
+  );
 
   const columns: ColumnsType<User> = [
     {
@@ -145,17 +151,7 @@ const UserTable: React.FC<UserTableProps> = ({
       dataIndex: "status",
       key: "status",
       width: "15%",
-      render: (status) => (
-        <span
-          className={`capitalize px-2 py-1 rounded-md text-sm ${
-            status === "active"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {status}
-        </span>
-      ),
+      render: (status) => <span className="capitalize text-sm">{status}</span>,
     },
     {
       title: "Action",
@@ -195,13 +191,16 @@ const UserTable: React.FC<UserTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
+    <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
       <div className="mb-4 flex flex-wrap gap-4 justify-between">
         <div className="flex flex-wrap gap-4">
           <Select
             placeholder="Gender"
             value={genderFilter}
-            onChange={setGenderFilter}
+            onChange={(value) => {
+              setGenderFilter(value);
+              debouncedFilter();
+            }}
             allowClear
             style={{ width: 120 }}
             options={[
@@ -212,7 +211,10 @@ const UserTable: React.FC<UserTableProps> = ({
           <Select
             placeholder="Status"
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={(value) => {
+              setStatusFilter(value);
+              debouncedFilter();
+            }}
             allowClear
             style={{ width: 120 }}
             options={[
@@ -220,25 +222,15 @@ const UserTable: React.FC<UserTableProps> = ({
               { value: "inactive", label: "Inactive" },
             ]}
           />
-          <Button onClick={handleReset}>Reset</Button>
         </div>
         <Space>
           <Input
             placeholder="Search name"
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={handleSearch}
-            suffix={
-              <SearchOutlined
-                onClick={handleSearch}
-                className="cursor-pointer"
-              />
-            }
+            onChange={handleSearch}
+            suffix={<SearchOutlined />}
             style={{ width: 200 }}
           />
-          <Button type="primary" onClick={handleSearch}>
-            Search
-          </Button>
         </Space>
       </div>
       <Table
@@ -246,6 +238,7 @@ const UserTable: React.FC<UserTableProps> = ({
         dataSource={data?.data}
         rowKey="id"
         loading={isLoading}
+        className=" bg-background"
         pagination={{
           ...tableParams.pagination,
           showSizeChanger: true,

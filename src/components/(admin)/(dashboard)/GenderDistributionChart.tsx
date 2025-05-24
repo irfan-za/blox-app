@@ -65,7 +65,7 @@ const GenderDistributionChart = ({
 
   return (
     <Card
-      className="shadow-sm h-fit border rounded-lg border-border"
+      className="h-fit shadow-sm rounded-lg border border-border bg-card"
       size="small"
       title="Post Distribution by Gender"
     >

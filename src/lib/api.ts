@@ -1,6 +1,6 @@
 import { LoginFormValues } from "@/types";
 import axios from "axios";
-import { createGoRestApiClient } from "./gorest-client";
+import { createGoRestApiClient } from "@/server/actions";
 
 export const internalApiClient = axios.create({
   baseURL: "/api",
@@ -37,7 +37,7 @@ export const postsApi = {
   }: {
     page?: number;
     per_page?: number;
-    query?: Record<string, string>;
+    query?: Record<string, string | string[]>;
   } = {}) => {
     const client = await goRestApiClient();
     const params = new URLSearchParams({
@@ -97,7 +97,7 @@ export const usersApi = {
   }: {
     page?: number;
     per_page?: number;
-    query?: Record<string, string>;
+    query?: Record<string, string | string[]>;
   } = {}) => {
     const client = await goRestApiClient();
     const params = new URLSearchParams({

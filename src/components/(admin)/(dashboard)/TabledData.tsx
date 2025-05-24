@@ -18,7 +18,7 @@ const TabledData: React.FC<TabledDataProps> = ({
   initialTotalPosts = 0,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm">
+    <div className="rounded-lg shadow-sm">
       <Tabs
         defaultActiveKey="users"
         items={[

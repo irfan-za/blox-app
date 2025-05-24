@@ -5,15 +5,15 @@
 :root {
   --primary: #59a2a6;
   --primary-foreground: #ffffff;
-  --card: #f1f3f0;
+  --card: #ffffff;
   --card-foreground: #374151;
-  --muted: #ebedf0;
+  --muted: #dadce0;
   --muted-foreground: #6c757f;
   --border: #d1d5db;
   --radius: 0.5rem;
 
   --foreground: #1c1c1e;
-  --background: #ffffff;
+  --background: hsl(100, 11%, 97%);
 }
 
 body {

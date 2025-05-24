@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { cookies } from "next/headers";
+import { usersApi } from "@/lib/api";
 
 export const createGoRestApiClient = async () => {
   const cookieStore = await cookies();
@@ -15,3 +16,23 @@ export const createGoRestApiClient = async () => {
     },
   });
 };
+
+export async function fetchUsersAction(
+  page: number,
+  per_page: number,
+  query: {
+    gender: string;
+    status: string;
+    name: string;
+  }
+) {
+  return await usersApi.getUsers({
+    page: page || 1,
+    per_page: per_page || 10,
+    query: {
+      gender: query.gender,
+      status: query.status,
+      name: query.name,
+    },
+  });
+}
