@@ -36,3 +36,7 @@ export async function fetchUsersAction(
     },
   });
 }
+export async function fetchUserAction(id: number) {
+  const response = await usersApi.getUser(id);
+  return response.data;
+}

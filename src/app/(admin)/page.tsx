@@ -17,14 +17,14 @@ export default async function DashboardPage({
   const totalUsers = users.total;
   const totalActiveUsers = activeUsers.total;
   const totalMaleUsers = maleUsers.total;
-  const totalPosts = await postsApi.getTotalPosts();
+  const { total: totalPosts } = await postsApi.getPosts();
   const userPosts = await Promise.all(
     users.data.map(async (user: User) => {
-      const totalPosts = await usersApi.getUserTotalPosts(user.id);
+      const { total } = await usersApi.getUser(user.id);
       return {
         id: user.id,
         name: user.name.split(" ")[0],
-        value: totalPosts,
+        value: total,
       };
     })
   );

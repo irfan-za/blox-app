@@ -4,10 +4,11 @@ import { Table, Input, Select, Button, Space, Dropdown } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue } from "antd/es/table/interface";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "@/types";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchUsersAction } from "@/server/actions";
+import { cn } from "@/lib/utils";
 
 interface UserTableProps {
   initialData?: User[];
@@ -23,6 +24,8 @@ const UserTable: React.FC<UserTableProps> = ({
   initialData = [],
   initialTotal = 0,
 }) => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const currentPage = searchParams.get("page")
     ? parseInt(searchParams.get("page") || "1")
@@ -49,16 +52,23 @@ const UserTable: React.FC<UserTableProps> = ({
   });
 
   const fetchUsers = async () => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
     const page = tableParams.pagination.current || 1;
     const per_page = tableParams.pagination.pageSize || 10;
-    console.log(per_page, "🚀🚀🚀");
 
-    params.set("page", String(page));
-    params.set("per_page", String(per_page));
-    params.set("gender", genderFilter ?? "");
-    params.set("status", statusFilter ?? "");
-    params.set("name", searchText);
+    const paramValues = {
+      page: String(page),
+      per_page: String(per_page),
+      gender: genderFilter ?? "",
+      status: statusFilter ?? "",
+      name: searchText,
+    };
+
+    Object.entries(paramValues).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      }
+    });
 
     const users = await fetchUsersAction(page, per_page, {
       gender: genderFilter ?? "",
@@ -66,7 +76,11 @@ const UserTable: React.FC<UserTableProps> = ({
       name: searchText,
     });
 
-    window.history.replaceState({}, "", `?${params.toString()}`);
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
 
     return {
       data: users.data,
@@ -81,12 +95,11 @@ const UserTable: React.FC<UserTableProps> = ({
     queryFn: fetchUsers,
     initialData: {
       data: initialData,
-      current: 1,
-      pageSize: 10,
+      current: currentPage,
+      pageSize: currentPerPage,
       total: initialTotal,
     },
   });
-
   const handleTableChange = (
     pagination: TablePaginationConfig,
     filters: Record<string, FilterValue | null>
@@ -168,7 +181,18 @@ const UserTable: React.FC<UserTableProps> = ({
       key: "status",
       width: "15%",
       sorter: (a, b) => a.status.localeCompare(b.status),
-      render: (status) => <span className="capitalize text-sm">{status}</span>,
+      render: (status) => (
+        <span
+          className={cn(
+            "text-sm px-2 py-0.5 rounded-full",
+            status === "active"
+              ? "bg-green-50 text-green-700"
+              : "bg-red-50 text-red-700"
+          )}
+        >
+          {status}
+        </span>
+      ),
     },
     {
       title: "Action",
@@ -178,7 +202,6 @@ const UserTable: React.FC<UserTableProps> = ({
         <Dropdown
           menu={{
             items: [
-              { key: "view", label: "View" },
               { key: "edit", label: "Edit" },
               { key: "delete", label: "Delete", danger: true },
             ],
@@ -193,11 +216,9 @@ const UserTable: React.FC<UserTableProps> = ({
 
   const handleAction = (action: string, user: User) => {
     switch (action) {
-      case "view":
-        console.log("Viewing user:", user);
-        break;
       case "edit":
-        console.log("Editing user:", user);
+        queryClient.setQueryData(["user", user.id.toString()], user);
+        router.push(`/users/${user.id}`);
         break;
       case "delete":
         console.log("Deleting user:", user);
@@ -255,7 +276,7 @@ const UserTable: React.FC<UserTableProps> = ({
         dataSource={data?.data}
         rowKey="id"
         loading={isLoading}
-        className="bg-background"
+        className="bg-background overflow-x-auto"
         pagination={{
           current: data.current,
           pageSize: data.pageSize,
