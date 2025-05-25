@@ -87,7 +87,10 @@ export default function DeleteModal({
           disabled: loading,
         }}
       >
-        <p>Are you sure you want to delete user {selectedData?.name}?</p>
+        <p>
+          Are you sure you want to delete {queryKey.slice(0, -1)}{" "}
+          {selectedData?.name}?
+        </p>
         <p>This action cannot be undone.</p>
       </Modal>
     </>
