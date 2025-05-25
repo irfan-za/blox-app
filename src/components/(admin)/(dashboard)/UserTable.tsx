@@ -5,7 +5,7 @@ import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue } from "antd/es/table/interface";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { SelectedUser, User } from "@/types";
+import { SelectedData, User } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchUsersAction } from "@/server/actions";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,7 @@ const UserTable: React.FC<UserTableProps> = ({
     filters: {},
   });
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
+  const [selectedData, setSelectedData] = useState<SelectedData | null>(null);
 
   const fetchUsers = async () => {
     const params = new URLSearchParams();
@@ -224,7 +224,7 @@ const UserTable: React.FC<UserTableProps> = ({
         router.push(`/users/${user.id}`);
         break;
       case "delete":
-        setSelectedUser({ name: user.name, id: user.id });
+        setSelectedData({ name: user.name, id: user.id });
         setDeleteModalVisible(true);
         break;
       default:
@@ -287,18 +287,19 @@ const UserTable: React.FC<UserTableProps> = ({
             pageSize: data.pageSize,
             total: data?.total,
             showSizeChanger: true,
-            showTotal: (total) =>
-              `1-${tableParams.pagination.pageSize} of ${total} items`,
+            showTotal: (total, range) => {
+              return `${range[0]}-${range[1]} of ${total} items`;
+            },
           }}
           onChange={handleTableChange}
         />
       </div>
-      {selectedUser && (
+      {selectedData && (
         <DeleteModal
           deleteModalVisible={deleteModalVisible}
-          selectedUser={selectedUser}
+          selectedData={selectedData}
           setDeleteModalVisible={setDeleteModalVisible}
-          setSelectedUser={setSelectedUser}
+          setSelectedData={setSelectedData}
           queryKey="users"
         />
       )}

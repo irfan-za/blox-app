@@ -2,8 +2,8 @@
 
 import axios from "axios";
 import { cookies } from "next/headers";
-import { usersApi } from "@/lib/api";
-import { User } from "@/types";
+import { postsApi, usersApi } from "@/lib/api";
+import { Post, User } from "@/types";
 
 export const createGoRestApiClient = async () => {
   const cookieStore = await cookies();
@@ -55,6 +55,47 @@ export async function fetchUserAction({
       ? await usersApi.createUser(data)
       : method === "put" && id && data
       ? await usersApi.updateUser(id, data)
+      : null;
+  if (!response) {
+    throw new Error("Invalid method or parameters");
+  }
+  return response.data;
+}
+
+export async function fetchPostsAction(
+  page: number,
+  per_page: number,
+  query: {
+    title: string;
+  }
+) {
+  return await postsApi.getPosts({
+    page: page || 1,
+    per_page: per_page || 10,
+    query: {
+      title: query.title,
+    },
+  });
+}
+
+export async function fetchPostAction({
+  id,
+  method,
+  data,
+}: {
+  id?: number;
+  method: "get" | "post" | "put" | "delete";
+  data?: Post;
+}) {
+  const response =
+    method === "get" && id
+      ? await postsApi.getPost(id)
+      : method === "delete" && id
+      ? await postsApi.deletePost(id)
+      : method === "post" && data
+      ? await postsApi.createPost(data)
+      : method === "put" && id && data
+      ? await postsApi.updatePost(id, data)
       : null;
   if (!response) {
     throw new Error("Invalid method or parameters");

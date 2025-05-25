@@ -16,7 +16,7 @@ export type Post = {
   title: string;
   body: string;
 };
-export type SelectedUser = {
+export type SelectedData = {
   id: number;
   name: string;
 };

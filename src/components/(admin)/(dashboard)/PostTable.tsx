@@ -1,11 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Table, Input, Button, Space, Dropdown } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue } from "antd/es/table/interface";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { SelectedData } from "@/types";
+import { fetchPostsAction } from "@/server/actions";
+import DeleteModal from "./DeleteModal";
 
 interface Post {
   id: number;
@@ -28,42 +31,73 @@ const PostTable: React.FC<PostTableProps> = ({
   initialData = [],
   initialTotal = 0,
 }) => {
-  const [searchText, setSearchText] = useState("");
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentPage = searchParams.get("page")
+    ? parseInt(searchParams.get("page") || "1")
+    : 1;
+  const currentPerPage = searchParams.get("per_page")
+    ? parseInt(searchParams.get("per_page") || "10")
+    : 10;
+  const [searchText, setSearchText] = useState<string>(
+    searchParams.get("title") || ""
+  );
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
-      current: 1,
-      pageSize: 10,
+      current: currentPage,
+      pageSize: currentPerPage,
       total: initialTotal,
     },
     filters: {},
   });
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedData, setSelectedData] = useState<SelectedData | null>(null);
 
   const fetchPosts = async () => {
     const params = new URLSearchParams();
+    const page = tableParams.pagination.current || 1;
+    const per_page = tableParams.pagination.pageSize || 10;
 
-    params.append("page", String(tableParams.pagination.current));
-    params.append("per_page", String(tableParams.pagination.pageSize));
+    const paramValues = {
+      page: String(page),
+      per_page: String(per_page),
+      title: searchText,
+    };
 
-    if (searchText) params.append("title", searchText);
-
-    const response = await axios.get("https://gorest.co.in/public/v2/posts", {
-      params,
-      headers: {},
+    Object.entries(paramValues).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      }
     });
 
-    const total =
-      Number(response.headers["x-pagination-total"]) || response.data.length;
+    const posts = await fetchPostsAction(page, per_page, {
+      title: searchText,
+    });
+
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
 
     return {
-      data: response.data,
-      total,
+      data: posts.data,
+      current: page,
+      pageSize: per_page,
+      total: posts.total,
     };
   };
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["posts", tableParams, searchText],
     queryFn: fetchPosts,
-    initialData: { data: initialData, total: initialTotal },
+    initialData: {
+      data: initialData,
+      current: currentPage,
+      pageSize: currentPerPage,
+      total: initialTotal,
+    },
   });
 
   const handleTableChange = (
@@ -77,18 +111,37 @@ const PostTable: React.FC<PostTableProps> = ({
       },
       filters,
     });
-  };
 
-  const handleSearch = () => {
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        current: 1,
-      },
-    });
-    refetch();
+    setTimeout(() => {
+      refetch();
+    }, 400);
   };
+  const debouncedFilter = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    return () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setTableParams({
+          ...tableParams,
+          pagination: {
+            ...tableParams.pagination,
+            current: 1,
+          },
+        });
+        refetch();
+      }, 400);
+    };
+  }, [tableParams, refetch]);
+
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = e.target;
+      setSearchText(value);
+      debouncedFilter();
+    },
+    [debouncedFilter]
+  );
 
   const columns: ColumnsType<Post> = [
     {
@@ -96,6 +149,7 @@ const PostTable: React.FC<PostTableProps> = ({
       dataIndex: "id",
       key: "id",
       width: "10%",
+      sorter: (a, b) => a.id - b.id,
       render: (id) => <span>#{id}</span>,
     },
     {
@@ -103,14 +157,16 @@ const PostTable: React.FC<PostTableProps> = ({
       dataIndex: "user_id",
       key: "user_id",
       width: "10%",
+      sorter: (a, b) => a.user_id - b.user_id,
     },
     {
       title: "Title",
       dataIndex: "title",
       key: "title",
-      width: "30%",
+      width: "20%",
+      sorter: (a, b) => a.title.localeCompare(b.title),
       render: (title) => (
-        <div className="truncate max-w-xs" title={title}>
+        <div className="truncate max-w-64" title={title}>
           {title}
         </div>
       ),
@@ -120,8 +176,9 @@ const PostTable: React.FC<PostTableProps> = ({
       dataIndex: "body",
       key: "body",
       width: "40%",
+      sorter: (a, b) => a.body.localeCompare(b.body),
       render: (body) => (
-        <div className="truncate max-w-md" title={body}>
+        <div className="truncate max-w-80" title={body}>
           {body}
         </div>
       ),
@@ -134,7 +191,6 @@ const PostTable: React.FC<PostTableProps> = ({
         <Dropdown
           menu={{
             items: [
-              { key: "view", label: "View" },
               { key: "edit", label: "Edit" },
               { key: "delete", label: "Delete", danger: true },
             ],
@@ -149,14 +205,13 @@ const PostTable: React.FC<PostTableProps> = ({
 
   const handleAction = (action: string, post: Post) => {
     switch (action) {
-      case "view":
-        console.log("Viewing post:", post);
-        break;
       case "edit":
-        console.log("Editing post:", post);
+        queryClient.setQueryData(["post", post.id.toString()], post);
+        router.push(`/posts/${post.id}`);
         break;
       case "delete":
-        console.log("Deleting post:", post);
+        setSelectedData({ name: post.title, id: post.id });
+        setDeleteModalVisible(true);
         break;
       default:
         break;
@@ -164,41 +219,47 @@ const PostTable: React.FC<PostTableProps> = ({
   };
 
   return (
-    <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
-      <div className="mb-4 flex flex-wrap gap-4 justify-between">
-        <Space>
-          <Input
-            placeholder="Search title"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={handleSearch}
-            suffix={
-              <SearchOutlined
-                onClick={handleSearch}
-                className="cursor-pointer"
-              />
-            }
-            style={{ width: 200 }}
-          />
-          <Button type="primary" onClick={handleSearch}>
-            Search
-          </Button>
-        </Space>
+    <>
+      <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
+        <div className="mb-4 flex flex-wrap gap-4 justify-between">
+          <Space>
+            <Input
+              placeholder="Search title"
+              value={searchText}
+              onChange={handleSearch}
+              suffix={<SearchOutlined />}
+              className="w-60 md:w-80"
+            />
+          </Space>
+        </div>
+        <Table
+          columns={columns}
+          dataSource={data?.data}
+          rowKey="id"
+          loading={isLoading}
+          className="bg-background overflow-x-auto"
+          pagination={{
+            current: data.current,
+            pageSize: data.pageSize,
+            total: data?.total,
+            showSizeChanger: true,
+            showTotal: (total, range) => {
+              return `${range[0]}-${range[1]} of ${total} items`;
+            },
+          }}
+          onChange={handleTableChange}
+        />
       </div>
-      <Table
-        columns={columns}
-        dataSource={data?.data}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{
-          ...tableParams.pagination,
-          showSizeChanger: true,
-          showTotal: (total) =>
-            `1-${tableParams.pagination.pageSize} of ${total} items`,
-        }}
-        onChange={handleTableChange}
-      />
-    </div>
+      {selectedData && (
+        <DeleteModal
+          deleteModalVisible={deleteModalVisible}
+          selectedData={selectedData}
+          setDeleteModalVisible={setDeleteModalVisible}
+          setSelectedData={setSelectedData}
+          queryKey="posts"
+        />
+      )}
+    </>
   );
 };
 

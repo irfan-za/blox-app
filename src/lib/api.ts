@@ -1,4 +1,4 @@
-import { LoginFormValues, User } from "@/types";
+import { LoginFormValues, Post, User } from "@/types";
 import axios from "axios";
 import { createGoRestApiClient } from "@/server/actions";
 import { NextResponse } from "next/server";
@@ -52,36 +52,51 @@ export const postsApi = {
       total: parseInt(response.headers["x-pagination-total"] || "0"),
     };
   },
-
-  getPost: async (id: number) => {
+  getPost: async (postId: number) => {
     const client = await goRestApiClient();
-    const response = await client.get(`/posts/${id}`);
-    return response.data;
+    const response = await client.get(`/posts/${postId}`);
+    return {
+      data: response.data,
+    };
   },
-
-  createPost: async (post: {
-    title: string;
-    body: string;
-    user_id: number;
-  }) => {
+  createPost: async (data: Post) => {
     const client = await goRestApiClient();
-    const response = await client.post("/posts", post);
-    return response.data;
+    const response = await client.post(`/posts`, data);
+    return { data: response.data };
   },
-
-  updatePost: async (
-    id: number,
-    post: { title: string; body: string; user_id: number }
-  ) => {
+  updatePost: async (postId: number, data: Post) => {
     const client = await goRestApiClient();
-    const response = await client.put(`/posts/${id}`, post);
-    return response.data;
+    const response = await client
+      .put(`/posts/${postId}`, data)
+      .catch((error) => {
+        if (error.response?.status === 404) {
+          return NextResponse.json("Post not found", {
+            status: 404,
+            statusText: "Post not found",
+          });
+        }
+        return NextResponse.json("Failed to update post", {
+          status: 500,
+          statusText: "Failed to update post",
+        });
+      });
+    return { data: response.status };
   },
-
-  deletePost: async (id: number) => {
+  deletePost: async (postId: number) => {
     const client = await goRestApiClient();
-    const response = await client.delete(`/posts/${id}`);
-    return response.data;
+    const response = await client.delete(`/posts/${postId}`).catch((error) => {
+      if (error.response?.status === 404) {
+        return NextResponse.json("Post not found", {
+          status: 404,
+          statusText: "Post not found",
+        });
+      }
+      return NextResponse.json("Failed to delete post", {
+        status: 500,
+        statusText: "Failed to delete post",
+      });
+    });
+    return { data: response?.status };
   },
 };
 
