@@ -17,6 +17,10 @@ export default function PostForm({ id }: { id: string }) {
     { value: string; label: string }[]
   >([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{
+    name: string;
+    id: string;
+  }>({ name: "", id: "" });
 
   const { data: post } = useQuery<Post>({
     queryKey: ["post", id],
@@ -32,10 +36,14 @@ export default function PostForm({ id }: { id: string }) {
 
   const mutation = useMutation({
     mutationFn: async (values: Post) => {
+      const newValues = {
+        ...values,
+        user_id: Number(selectedUser.id),
+      };
       return await fetchPostAction({
         ...(id !== "create-post" && { id: Number(id) }),
         method: id === "create-post" ? "post" : "put",
-        data: values,
+        data: newValues,
       });
     },
     onSuccess: () => {
@@ -109,19 +117,21 @@ export default function PostForm({ id }: { id: string }) {
       >
         <Form.Item
           label="User Name (Author)"
-          name="user_id"
+          name="name"
           rules={[{ required: true, message: "Please select a user!" }]}
         >
           <AutoComplete
             options={userOptions}
             onSearch={handleUserSearch}
-            onSelect={(value) => {
-              form.setFieldsValue({ user_id: value });
+            onSelect={(value, option) => {
+              form.setFieldsValue({ name: option.label });
+              setSelectedUser({ name: option.label, id: value });
             }}
             placeholder="Search and select a user"
             className="w-full"
             showSearch
             filterOption={false}
+            value={selectedUser.name || undefined}
             notFoundContent={searchLoading ? "Searching..." : "No users found"}
           />
         </Form.Item>
