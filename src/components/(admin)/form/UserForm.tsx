@@ -12,7 +12,7 @@ export default function UserForm({ id }: { id: string }) {
       if (id === "create-user") {
         return {} as User;
       }
-      const user = await fetchUserAction(Number(id));
+      const user = await fetchUserAction({ id: Number(id), method: "get" });
       return user;
     },
     staleTime: Infinity,

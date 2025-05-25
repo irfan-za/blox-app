@@ -36,7 +36,16 @@ export async function fetchUsersAction(
     },
   });
 }
-export async function fetchUserAction(id: number) {
-  const response = await usersApi.getUser(id);
+export async function fetchUserAction({
+  id,
+  method,
+}: {
+  id: number;
+  method: "get" | "delete";
+}) {
+  const response =
+    method === "get"
+      ? await usersApi.getUser(id)
+      : await usersApi.deleteUser(id);
   return response.data;
 }

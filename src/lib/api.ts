@@ -1,6 +1,7 @@
 import { LoginFormValues } from "@/types";
 import axios from "axios";
 import { createGoRestApiClient } from "@/server/actions";
+import { NextResponse } from "next/server";
 
 export const internalApiClient = axios.create({
   baseURL: "/api",
@@ -114,11 +115,27 @@ export const usersApi = {
       total: parseInt(response.headers["x-pagination-total"] || "0"),
     };
   },
-  postUsers: async (email: string) => {
+  postUser: async (email: string) => {
     const client = await goRestApiClient();
     const response = await client.post(`/users`, {
       email,
     });
     return response.data;
+  },
+  deleteUser: async (userId: number) => {
+    const client = await goRestApiClient();
+    const response = await client.delete(`/users/${userId}`).catch((error) => {
+      if (error.response?.status === 404) {
+        return NextResponse.json("User not found", {
+          status: 404,
+          statusText: "User not found",
+        });
+      }
+      return NextResponse.json("Failed to delete user", {
+        status: 500,
+        statusText: "Failed to delete user",
+      });
+    });
+    return { data: response?.status };
   },
 };

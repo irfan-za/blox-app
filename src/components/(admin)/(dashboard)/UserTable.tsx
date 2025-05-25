@@ -5,10 +5,11 @@ import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue } from "antd/es/table/interface";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { User } from "@/types";
+import { SelectedUser, User } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchUsersAction } from "@/server/actions";
 import { cn } from "@/lib/utils";
+import DeleteModal from "./DeleteModal";
 
 interface UserTableProps {
   initialData?: User[];
@@ -50,6 +51,8 @@ const UserTable: React.FC<UserTableProps> = ({
     },
     filters: {},
   });
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
 
   const fetchUsers = async () => {
     const params = new URLSearchParams();
@@ -221,7 +224,8 @@ const UserTable: React.FC<UserTableProps> = ({
         router.push(`/users/${user.id}`);
         break;
       case "delete":
-        console.log("Deleting user:", user);
+        setSelectedUser({ name: user.name, id: user.id });
+        setDeleteModalVisible(true);
         break;
       default:
         break;
@@ -229,65 +233,76 @@ const UserTable: React.FC<UserTableProps> = ({
   };
 
   return (
-    <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
-      <div className="mb-4 flex flex-wrap flex-col md:flex-row gap-4 justify-between">
-        <div className="flex flex-wrap gap-4">
-          <Select
-            placeholder="Gender"
-            value={genderFilter}
-            onChange={(value) => {
-              setGenderFilter(value);
-              debouncedFilter();
-            }}
-            allowClear
-            className="w-28 md:w-32"
-            options={[
-              { value: "male", label: "Male" },
-              { value: "female", label: "Female" },
-            ]}
-          />
-          <Select
-            placeholder="Status"
-            value={statusFilter}
-            onChange={(value) => {
-              setStatusFilter(value);
-              debouncedFilter();
-            }}
-            allowClear
-            className="w-28 md:w-32"
-            options={[
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ]}
-          />
+    <>
+      <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
+        <div className="mb-4 flex flex-wrap flex-col md:flex-row gap-4 justify-between">
+          <div className="flex flex-wrap gap-4">
+            <Select
+              placeholder="Gender"
+              value={genderFilter}
+              onChange={(value) => {
+                setGenderFilter(value);
+                debouncedFilter();
+              }}
+              allowClear
+              className="w-28 md:w-32"
+              options={[
+                { value: "male", label: "Male" },
+                { value: "female", label: "Female" },
+              ]}
+            />
+            <Select
+              placeholder="Status"
+              value={statusFilter}
+              onChange={(value) => {
+                setStatusFilter(value);
+                debouncedFilter();
+              }}
+              allowClear
+              className="w-28 md:w-32"
+              options={[
+                { value: "active", label: "Active" },
+                { value: "inactive", label: "Inactive" },
+              ]}
+            />
+          </div>
+          <Space>
+            <Input
+              placeholder="Search name"
+              value={searchText}
+              onChange={handleSearch}
+              suffix={<SearchOutlined />}
+              className="w-60 md:w-80"
+            />
+          </Space>
         </div>
-        <Space>
-          <Input
-            placeholder="Search name"
-            value={searchText}
-            onChange={handleSearch}
-            suffix={<SearchOutlined />}
-            className="w-60 md:w-80"
-          />
-        </Space>
+        <Table
+          columns={columns}
+          dataSource={data?.data}
+          rowKey="id"
+          loading={isLoading}
+          className="bg-background overflow-x-auto"
+          pagination={{
+            current: data.current,
+            pageSize: data.pageSize,
+            total: data?.total,
+            showSizeChanger: true,
+            showTotal: (total) =>
+              `1-${tableParams.pagination.pageSize} of ${total} items`,
+          }}
+          onChange={handleTableChange}
+        />
       </div>
-      <Table
-        columns={columns}
-        dataSource={data?.data}
-        rowKey="id"
-        loading={isLoading}
-        className="bg-background overflow-x-auto"
-        pagination={{
-          current: data.current,
-          pageSize: data.pageSize,
-          total: data?.total,
-          showSizeChanger: true,
-          showTotal: (total) =>
-            `1-${tableParams.pagination.pageSize} of ${total} items`,
-        }}
-        onChange={handleTableChange}
-      />
-    </div>
+      {selectedUser && (
+        <DeleteModal
+          deleteModalVisible={deleteModalVisible}
+          selectedUser={selectedUser}
+          setDeleteModalVisible={setDeleteModalVisible}
+          setSelectedUser={setSelectedUser}
+          queryKey="users"
+        />
+      )}
+    </>
   );
 };
 
