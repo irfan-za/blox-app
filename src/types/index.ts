@@ -16,6 +16,12 @@ export type Post = {
   title: string;
   body: string;
 };
+export type PostFormField = {
+  id: number;
+  user_id: number;
+  name: string;
+  body: string;
+};
 export type SelectedData = {
   id: number;
   name: string;

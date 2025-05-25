@@ -3,7 +3,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { Table, Input, Select, Button, Space, Dropdown } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import type { FilterValue } from "antd/es/table/interface";
+import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SelectedData, User } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -105,7 +105,8 @@ const UserTable: React.FC<UserTableProps> = ({
   });
   const handleTableChange = (
     pagination: TablePaginationConfig,
-    filters: Record<string, FilterValue | null>
+    filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<User> | SorterResult<User>[]
   ) => {
     setTableParams({
       pagination: {
@@ -115,9 +116,11 @@ const UserTable: React.FC<UserTableProps> = ({
       filters,
     });
 
-    setTimeout(() => {
-      refetch();
-    }, 400);
+    if (!Array.isArray(sorter) && (!sorter.order || !sorter.column)) {
+      setTimeout(() => {
+        refetch();
+      }, 400);
+    }
   };
 
   const debouncedFilter = useMemo(() => {
@@ -276,23 +279,24 @@ const UserTable: React.FC<UserTableProps> = ({
             />
           </Space>
         </div>
-        <Table
-          columns={columns}
-          dataSource={data?.data}
-          rowKey="id"
-          loading={isLoading}
-          className="bg-background overflow-x-auto"
-          pagination={{
-            current: data.current,
-            pageSize: data.pageSize,
-            total: data?.total,
-            showSizeChanger: true,
-            showTotal: (total, range) => {
-              return `${range[0]}-${range[1]} of ${total} items`;
-            },
-          }}
-          onChange={handleTableChange}
-        />
+        <div className="overflow-x-auto">
+          <Table
+            columns={columns}
+            dataSource={data?.data}
+            rowKey="id"
+            loading={isLoading}
+            pagination={{
+              current: data.current,
+              pageSize: data.pageSize,
+              total: data?.total,
+              showSizeChanger: true,
+              showTotal: (total, range) => {
+                return `${range[0]}-${range[1]} of ${total} items`;
+              },
+            }}
+            onChange={handleTableChange}
+          />
+        </div>
       </div>
       {selectedData && (
         <DeleteModal

@@ -24,7 +24,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-auto pb-4 text-center text-gray-500 text-xs">
-          <p>Copyright © 2024 BloX App</p>
+          <p>Copyright © 2025 BloX App</p>
           <p>All Rights Reserved</p>
           <p className="mt-2">App version 1.0.0</p>
         </div>

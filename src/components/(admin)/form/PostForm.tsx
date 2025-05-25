@@ -2,10 +2,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState, useMemo } from "react";
 import SkeletonForm from "./SkeletonForm";
-import { fetchPostAction, fetchUsersAction } from "@/server/actions";
+import {
+  fetchPostAction,
+  fetchUserAction,
+  fetchUsersAction,
+} from "@/server/actions";
 import { Form, Input, Button, message, AutoComplete } from "antd";
 import { useRouter } from "next/navigation";
-import { Post, User } from "@/types";
+import { Post, PostFormField, User } from "@/types";
 import TextArea from "antd/es/input/TextArea";
 
 export default function PostForm({ id }: { id: string }) {
@@ -22,14 +26,22 @@ export default function PostForm({ id }: { id: string }) {
     id: string;
   }>({ name: "", id: "" });
 
-  const { data: post } = useQuery<Post>({
+  const { data: post } = useQuery<PostFormField>({
     queryKey: ["post", id],
     queryFn: async () => {
       if (id === "create-post") {
-        return {} as Post;
+        return {} as PostFormField;
       }
       const post = await fetchPostAction({ id: Number(id), method: "get" });
-      return post;
+      const user = await fetchUserAction({
+        id: Number(await post.user_id),
+        method: "get",
+      });
+      setSelectedUser({ name: user.name, id: user.id.toString() });
+      return {
+        ...post,
+        name: user.name,
+      };
     },
     staleTime: Infinity,
   });
@@ -83,14 +95,13 @@ export default function PostForm({ id }: { id: string }) {
             gender: "",
             status: "",
           });
-          console.log(users);
           const options = users.data.map((user: User) => ({
             value: user.id.toString(),
             label: user.name,
           }));
           setUserOptions(options);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-          console.error("Failed to fetch users:", error);
           setUserOptions([]);
         } finally {
           setSearchLoading(false);
