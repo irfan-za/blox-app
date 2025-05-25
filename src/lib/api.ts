@@ -1,4 +1,4 @@
-import { LoginFormValues } from "@/types";
+import { LoginFormValues, User } from "@/types";
 import axios from "axios";
 import { createGoRestApiClient } from "@/server/actions";
 import { NextResponse } from "next/server";
@@ -107,7 +107,7 @@ export const usersApi = {
       total: parseInt(response.headers["x-pagination-total"] || "0"),
     };
   },
-  getUser: async (userId: number) => {
+  getUserPosts: async (userId: number) => {
     const client = await goRestApiClient();
     const response = await client.get(`/users/${userId}/posts`);
     return {
@@ -115,12 +115,35 @@ export const usersApi = {
       total: parseInt(response.headers["x-pagination-total"] || "0"),
     };
   },
-  postUser: async (email: string) => {
+  getUser: async (userId: number) => {
     const client = await goRestApiClient();
-    const response = await client.post(`/users`, {
-      email,
-    });
-    return response.data;
+    const response = await client.get(`/users/${userId}`);
+    return {
+      data: response.data,
+    };
+  },
+  createUser: async (data: User) => {
+    const client = await goRestApiClient();
+    const response = await client.post(`/users`, data);
+    return { data: response.data };
+  },
+  updateUser: async (userId: number, data: User) => {
+    const client = await goRestApiClient();
+    const response = await client
+      .put(`/users/${userId}`, data)
+      .catch((error) => {
+        if (error.response?.status === 404) {
+          return NextResponse.json("User not found", {
+            status: 404,
+            statusText: "User not found",
+          });
+        }
+        return NextResponse.json("Failed to update user", {
+          status: 500,
+          statusText: "Failed to update user",
+        });
+      });
+    return { data: response.status };
   },
   deleteUser: async (userId: number) => {
     const client = await goRestApiClient();

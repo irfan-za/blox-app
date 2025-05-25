@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
       { success: true, message: "Login successful" },
       { status: 200 }
     );
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: unknown) {
-    console.error("Login error:", error);
     return NextResponse.json(
       { success: false, message: "Login failed" },
       { status: 500 }

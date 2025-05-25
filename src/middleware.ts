@@ -14,7 +14,6 @@ export async function middleware(request: NextRequest) {
     })
     .catch(function (error) {
       if (error.response && !pathname.startsWith("/login")) {
-        console.log(error.response.data);
         NextResponse.redirect(new URL("/login", request.url));
         return;
       }
@@ -29,5 +28,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/", "/create-user", "/create-post"],
+  matcher: ["/login", "/", "/users/:path*", "/posts/:path*"],
 };

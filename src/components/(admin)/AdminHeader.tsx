@@ -9,7 +9,9 @@ export default function AdminHeader() {
 
   return (
     <div className="mb-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold">
+        {pathname === "/" ? "Dashboard" : "Blog Management"}
+      </h1>
       <span className="text-primary text-sm">
         <LayoutOutlined className="mr-1" />
         <Link href={"/"}>Dashboard</Link>

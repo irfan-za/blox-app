@@ -94,17 +94,23 @@ export default function AdminPanelLayout({
                 </h3>
                 <Menu
                   mode="vertical"
-                  selectedKeys={[pathname.replace("/", "")]}
+                  selectedKeys={[
+                    pathname.startsWith("/posts")
+                      ? "create-post"
+                      : pathname.startsWith("/users")
+                      ? "create-user"
+                      : "",
+                  ]}
                   items={[
                     {
                       key: "create-user",
                       icon: <UserOutlined />,
-                      label: <Link href="/create-user">Create User</Link>,
+                      label: <Link href="/users/create-user">Create User</Link>,
                     },
                     {
                       key: "create-post",
                       icon: <FormOutlined />,
-                      label: <Link href="/create-post">Create Post</Link>,
+                      label: <Link href="/posts/create-post">Create Post</Link>,
                     },
                   ]}
                 />

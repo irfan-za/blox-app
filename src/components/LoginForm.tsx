@@ -28,7 +28,6 @@ export default function LoginForm() {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error("Login error:", error);
       messageApi.open({
         type: "error",
         content:

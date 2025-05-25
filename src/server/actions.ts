@@ -3,6 +3,7 @@
 import axios from "axios";
 import { cookies } from "next/headers";
 import { usersApi } from "@/lib/api";
+import { User } from "@/types";
 
 export const createGoRestApiClient = async () => {
   const cookieStore = await cookies();
@@ -39,13 +40,24 @@ export async function fetchUsersAction(
 export async function fetchUserAction({
   id,
   method,
+  data,
 }: {
-  id: number;
-  method: "get" | "delete";
+  id?: number;
+  method: "get" | "post" | "put" | "delete";
+  data?: User;
 }) {
   const response =
-    method === "get"
+    method === "get" && id
       ? await usersApi.getUser(id)
-      : await usersApi.deleteUser(id);
+      : method === "delete" && id
+      ? await usersApi.deleteUser(id)
+      : method === "post" && data
+      ? await usersApi.createUser(data)
+      : method === "put" && id && data
+      ? await usersApi.updateUser(id, data)
+      : null;
+  if (!response) {
+    throw new Error("Invalid method or parameters");
+  }
   return response.data;
 }

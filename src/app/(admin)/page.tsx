@@ -20,7 +20,7 @@ export default async function DashboardPage({
   const { total: totalPosts } = await postsApi.getPosts();
   const userPosts = await Promise.all(
     users.data.map(async (user: User) => {
-      const { total } = await usersApi.getUser(user.id);
+      const { total } = await usersApi.getUserPosts(user.id);
       return {
         id: user.id,
         name: user.name.split(" ")[0],
