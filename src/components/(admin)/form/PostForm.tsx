@@ -1,11 +1,11 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import React from "react";
+import React, { useState, useMemo } from "react";
 import SkeletonForm from "./SkeletonForm";
-import { fetchPostAction } from "@/server/actions";
-import { Form, Input, Button, message } from "antd";
+import { fetchPostAction, fetchUsersAction } from "@/server/actions";
+import { Form, Input, Button, message, AutoComplete } from "antd";
 import { useRouter } from "next/navigation";
-import { Post } from "@/types";
+import { Post, User } from "@/types";
 import TextArea from "antd/es/input/TextArea";
 
 export default function PostForm({ id }: { id: string }) {
@@ -13,6 +13,10 @@ export default function PostForm({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const [userOptions, setUserOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const { data: post } = useQuery<Post>({
     queryKey: ["post", id],
@@ -52,6 +56,45 @@ export default function PostForm({ id }: { id: string }) {
     },
   });
 
+  const debouncedSearch = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    return (searchValue: string) => {
+      clearTimeout(timeoutId);
+
+      if (!searchValue) {
+        setUserOptions([]);
+        return;
+      }
+
+      setSearchLoading(true);
+      timeoutId = setTimeout(async () => {
+        try {
+          const users = await fetchUsersAction(1, 10, {
+            name: searchValue,
+            gender: "",
+            status: "",
+          });
+          console.log(users);
+          const options = users.data.map((user: User) => ({
+            value: user.id.toString(),
+            label: user.name,
+          }));
+          setUserOptions(options);
+        } catch (error) {
+          console.error("Failed to fetch users:", error);
+          setUserOptions([]);
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 400);
+    };
+  }, []);
+
+  const handleUserSearch = (value: string) => {
+    debouncedSearch(value);
+  };
+
   if (!post) return <SkeletonForm />;
 
   return (
@@ -65,11 +108,22 @@ export default function PostForm({ id }: { id: string }) {
         className="space-y-4"
       >
         <Form.Item
-          label="User Id"
+          label="User Name (Author)"
           name="user_id"
-          rules={[{ required: true, message: "Please input your user id!" }]}
+          rules={[{ required: true, message: "Please select a user!" }]}
         >
-          <Input placeholder="Please fill post user id..." className="w-full" />
+          <AutoComplete
+            options={userOptions}
+            onSearch={handleUserSearch}
+            onSelect={(value) => {
+              form.setFieldsValue({ user_id: value });
+            }}
+            placeholder="Search and select a user"
+            className="w-full"
+            showSearch
+            filterOption={false}
+            notFoundContent={searchLoading ? "Searching..." : "No users found"}
+          />
         </Form.Item>
 
         <Form.Item
