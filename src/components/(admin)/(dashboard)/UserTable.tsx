@@ -79,11 +79,7 @@ const UserTable: React.FC<UserTableProps> = ({
       name: searchText,
     });
 
-    window.history.replaceState(
-      {},
-      "",
-      params.toString() ? `?${params.toString()}` : window.location.pathname
-    );
+    router.replace(`?${params.toString()}`);
 
     return {
       data: users.data,

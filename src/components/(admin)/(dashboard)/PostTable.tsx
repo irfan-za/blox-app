@@ -102,11 +102,7 @@ const PostTable: React.FC<PostTableProps> = ({
       });
     }
 
-    window.history.replaceState(
-      {},
-      "",
-      params.toString() ? `?${params.toString()}` : window.location.pathname
-    );
+    router.replace(`?${params.toString()}`);
 
     return {
       data: posts.data,
