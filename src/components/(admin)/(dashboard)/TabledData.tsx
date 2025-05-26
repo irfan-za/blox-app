@@ -9,6 +9,8 @@ interface TabledDataProps {
   initialTotalUsers?: number;
   initialPosts?: Post[];
   initialTotalPosts?: number;
+  triggerRefetch: boolean;
+  setTriggerRefetch: (value: boolean) => void;
 }
 
 const TabledData: React.FC<TabledDataProps> = ({
@@ -16,6 +18,8 @@ const TabledData: React.FC<TabledDataProps> = ({
   initialTotalUsers = 0,
   initialPosts = [],
   initialTotalPosts = 0,
+  triggerRefetch,
+  setTriggerRefetch,
 }) => {
   return (
     <div className="rounded-lg shadow-sm">
@@ -29,6 +33,8 @@ const TabledData: React.FC<TabledDataProps> = ({
               <UserTable
                 initialData={initialUsers}
                 initialTotal={initialTotalUsers}
+                triggerRefetch={triggerRefetch}
+                setTriggerRefetch={setTriggerRefetch}
               />
             ),
           },
@@ -39,6 +45,8 @@ const TabledData: React.FC<TabledDataProps> = ({
               <PostTable
                 initialData={initialPosts}
                 initialTotal={initialTotalPosts}
+                triggerRefetch={triggerRefetch}
+                setTriggerRefetch={setTriggerRefetch}
               />
             ),
           },

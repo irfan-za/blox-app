@@ -12,8 +12,10 @@ import { cn } from "@/lib/utils";
 import DeleteModal from "./DeleteModal";
 
 interface UserTableProps {
-  initialData?: User[];
-  initialTotal?: number;
+  initialData: User[];
+  initialTotal: number;
+  triggerRefetch: boolean;
+  setTriggerRefetch: (value: boolean) => void;
 }
 
 interface TableParams {
@@ -24,6 +26,8 @@ interface TableParams {
 const UserTable: React.FC<UserTableProps> = ({
   initialData = [],
   initialTotal = 0,
+  triggerRefetch,
+  setTriggerRefetch,
 }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -79,7 +83,12 @@ const UserTable: React.FC<UserTableProps> = ({
       name: searchText,
     });
 
-    router.replace(`?${params.toString()}`);
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
+    setTriggerRefetch(!triggerRefetch);
 
     return {
       data: users.data,

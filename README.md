@@ -8,7 +8,7 @@ BloX App is designed to streamline user and blog management. It provides a centr
 
 **Demo Video:**
 
-[![BloX App Demo Video Thumbnail](https://img.youtube.com/vi/TuGu8ojK07A/default.jpg)](https://www.youtube.com/watch?v=TuGu8ojK07A)
+[![BloX App Demo Video Thumbnail](https://img.youtube.com/vi/i5UrxUOcLo0/default.jpg)](https://www.youtube.com/watch?v=i5UrxUOcLo0)
 
 ### Demo Account
 

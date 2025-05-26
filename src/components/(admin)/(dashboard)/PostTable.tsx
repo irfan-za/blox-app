@@ -20,6 +20,8 @@ interface Post {
 interface PostTableProps {
   initialData?: Post[];
   initialTotal?: number;
+  triggerRefetch: boolean;
+  setTriggerRefetch: (value: boolean) => void;
 }
 
 interface TableParams {
@@ -30,6 +32,8 @@ interface TableParams {
 const PostTable: React.FC<PostTableProps> = ({
   initialData = [],
   initialTotal = 0,
+  triggerRefetch,
+  setTriggerRefetch,
 }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -102,7 +106,12 @@ const PostTable: React.FC<PostTableProps> = ({
       });
     }
 
-    router.replace(`?${params.toString()}`);
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
+    setTriggerRefetch(!triggerRefetch);
 
     return {
       data: posts.data,

@@ -16,6 +16,11 @@ export type Post = {
   title: string;
   body: string;
 };
+export interface UserPost {
+  id: string;
+  name: string;
+  value: number;
+}
 export type PostFormField = {
   id: number;
   user_id: number;

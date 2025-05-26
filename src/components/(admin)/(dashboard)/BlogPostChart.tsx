@@ -2,12 +2,7 @@
 import React from "react";
 import { Card } from "antd";
 import ReactECharts from "echarts-for-react";
-
-interface UserPost {
-  id: string;
-  name: string;
-  value: number;
-}
+import { UserPost } from "@/types";
 
 const BlogPostChart = ({ userPosts }: { userPosts: UserPost[] }) => {
   const option = {
