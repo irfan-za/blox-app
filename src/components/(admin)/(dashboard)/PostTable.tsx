@@ -4,10 +4,9 @@ import { Table, Input, Button, Space, Dropdown, Select } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { SelectedData } from "@/types";
-import { fetchPostAction, fetchPostsAction } from "@/server/actions";
 import DeleteModal from "./DeleteModal";
 
 interface Post {
@@ -18,10 +17,22 @@ interface Post {
 }
 
 interface PostTableProps {
-  initialData?: Post[];
-  initialTotal?: number;
-  triggerRefetch: boolean;
-  setTriggerRefetch: (value: boolean) => void;
+  posts: {
+    data: Post[];
+    current: number;
+    pageSize: number;
+    total: number;
+  };
+  isPostsLoading: boolean;
+  postsTableParams: TableParams;
+  idFilter: string | null;
+  userIdFilter: string | null;
+  searchTitle: string;
+  setPostsTableParams: (params: TableParams) => void;
+  setIdFilter: (value: string | null) => void;
+  setUserIdFilter: (value: string | null) => void;
+  setSearchTitle: (value: string) => void;
+  postsRefetch: () => void;
 }
 
 interface TableParams {
@@ -30,124 +41,45 @@ interface TableParams {
 }
 
 const PostTable: React.FC<PostTableProps> = ({
-  initialData = [],
-  initialTotal = 0,
-  triggerRefetch,
-  setTriggerRefetch,
+  posts,
+  isPostsLoading,
+  postsTableParams,
+  idFilter,
+  userIdFilter,
+  searchTitle,
+  setPostsTableParams,
+  setIdFilter,
+  setUserIdFilter,
+  setSearchTitle,
+  postsRefetch,
 }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentPage = searchParams.get("page")
-    ? parseInt(searchParams.get("page") || "1")
-    : 1;
-  const currentPerPage = searchParams.get("per_page")
-    ? parseInt(searchParams.get("per_page") || "10")
-    : 10;
-  const [idFilter, setIdFilter] = useState<string | null>(
-    searchParams.get("id") || null
-  );
-  const [userIdFilter, setUserIdFilter] = useState<string | null>(
-    searchParams.get("user_id") || null
-  );
-  const [searchText, setSearchText] = useState<string>(
-    searchParams.get("title") || ""
-  );
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedData, setSelectedData] = useState<SelectedData | null>(null);
   const [idOptions, setIdOptions] = useState<
     { value: string; label: string }[]
   >([]);
   const [userIdOptions, setUserIdOptions] = useState<
     { value: string; label: string }[]
   >([]);
-  const [tableParams, setTableParams] = useState<TableParams>({
-    pagination: {
-      current: currentPage,
-      pageSize: currentPerPage,
-      total: initialTotal,
-    },
-    filters: {},
-  });
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [selectedData, setSelectedData] = useState<SelectedData | null>(null);
-
-  const fetchPosts = async () => {
-    const params = new URLSearchParams();
-    const page = tableParams.pagination.current || 1;
-    const per_page = tableParams.pagination.pageSize || 10;
-
-    const paramValues = {
-      page: String(page),
-      per_page: String(per_page),
-      title: searchText,
-      user_id: userIdFilter,
-      id: idFilter,
-    };
-
-    Object.entries(paramValues).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      }
-    });
-
-    let posts;
-    if (idFilter) {
-      const singlePost = await fetchPostAction({
-        id: Number(idFilter),
-        method: "get",
-      });
-      posts = {
-        data: singlePost ? [singlePost] : [],
-        total: singlePost ? 1 : 0,
-      };
-    } else {
-      posts = await fetchPostsAction(page, per_page, {
-        title: searchText,
-        user_id: userIdFilter ?? "",
-      });
-    }
-
-    window.history.replaceState(
-      {},
-      "",
-      params.toString() ? `?${params.toString()}` : window.location.pathname
-    );
-    setTriggerRefetch(!triggerRefetch);
-
-    return {
-      data: posts.data,
-      current: page,
-      pageSize: per_page,
-      total: posts.total,
-    };
-  };
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["posts", tableParams, searchText],
-    queryFn: fetchPosts,
-    initialData: {
-      data: initialData,
-      current: currentPage,
-      pageSize: currentPerPage,
-      total: initialTotal,
-    },
-  });
 
   const handleTableChange = (
     pagination: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
     sorter: SorterResult<Post> | SorterResult<Post>[]
   ) => {
-    setTableParams({
+    setPostsTableParams({
       pagination: {
         ...pagination,
-        total: data?.total,
+        total: posts.total,
       },
       filters,
     });
 
     if (!Array.isArray(sorter) && (!sorter.order || !sorter.column)) {
       setTimeout(() => {
-        refetch();
+        postsRefetch();
       }, 400);
     }
   };
@@ -157,30 +89,30 @@ const PostTable: React.FC<PostTableProps> = ({
     return () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        setTableParams({
-          ...tableParams,
+        setPostsTableParams({
+          ...postsTableParams,
           pagination: {
-            ...tableParams.pagination,
+            ...postsTableParams.pagination,
             current: 1,
           },
         });
-        refetch();
+        postsRefetch();
       }, 400);
     };
-  }, [tableParams, refetch]);
+  }, [postsTableParams, postsRefetch]);
 
   const handleSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = e.target;
-      setSearchText(value);
+      setSearchTitle(value);
       debouncedFilter();
     },
     [debouncedFilter]
   );
   useEffect(() => {
-    if (data) {
+    if (posts) {
       const uniqueIds = new Set<string>();
-      const idOptions = data.data.reduce(
+      const idOptions = posts.data.reduce(
         (acc: { value: string; label: string }[], post: Post) => {
           const id = post.id.toString();
           if (!uniqueIds.has(id)) {
@@ -196,7 +128,7 @@ const PostTable: React.FC<PostTableProps> = ({
       );
 
       const uniqueUserIds = new Set<string>();
-      const userIdOptions = data.data.reduce(
+      const userIdOptions = posts.data.reduce(
         (acc: { value: string; label: string }[], post: Post) => {
           const userId = post.user_id.toString();
           if (!uniqueUserIds.has(userId)) {
@@ -214,7 +146,7 @@ const PostTable: React.FC<PostTableProps> = ({
       setIdOptions(idOptions);
       setUserIdOptions(userIdOptions);
     }
-  }, [data]);
+  }, [posts]);
 
   const columns: ColumnsType<Post> = [
     {
@@ -322,7 +254,7 @@ const PostTable: React.FC<PostTableProps> = ({
           <Space>
             <Input
               placeholder="Search title"
-              value={searchText}
+              value={searchTitle}
               onChange={handleSearch}
               suffix={<SearchOutlined />}
               className="w-60 md:w-80"
@@ -332,13 +264,13 @@ const PostTable: React.FC<PostTableProps> = ({
         <div className="overflow-x-auto">
           <Table
             columns={columns}
-            dataSource={data?.data}
+            dataSource={posts.data}
             rowKey="id"
-            loading={isLoading}
+            loading={isPostsLoading}
             pagination={{
-              current: data.current,
-              pageSize: data.pageSize,
-              total: data?.total,
+              current: posts.current,
+              pageSize: posts.pageSize,
+              total: posts.total,
               showSizeChanger: true,
               showTotal: (total, range) => {
                 return `${range[0]}-${range[1]} of ${total} items`;

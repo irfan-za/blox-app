@@ -1,3 +1,6 @@
+import { TablePaginationConfig } from "antd";
+import { FilterValue } from "antd/es/table/interface";
+
 export type LoginFormValues = {
   email: string;
   accessToken: string;
@@ -17,7 +20,7 @@ export type Post = {
   body: string;
 };
 export interface UserPost {
-  id: string;
+  id: number;
   name: string;
   value: number;
 }
@@ -31,3 +34,7 @@ export type SelectedData = {
   id: number;
   name: string;
 };
+export interface TableParams {
+  pagination: TablePaginationConfig;
+  filters: Record<string, FilterValue | null>;
+}

@@ -4,15 +4,16 @@ import BlogPostChart from "@/components/(admin)/(dashboard)/BlogPostChart";
 import UserStatusChart from "@/components/(admin)/(dashboard)/UserStatusChart";
 import GenderDistributionChart from "@/components/(admin)/(dashboard)/GenderDistributionChart";
 import TabledData from "@/components/(admin)/(dashboard)/TabledData";
-import { Post, User, UserPost } from "@/types";
-import { useEffect, useState } from "react";
+import { Post, TableParams, User, UserPost } from "@/types";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
+  fetchPostAction,
   fetchPostsAction,
   fetchUserPostsAction,
   fetchUsersAction,
 } from "@/server/actions";
-
+import { useQuery } from "@tanstack/react-query";
 export default function DashboardClient({
   initialUsersData,
   initialPostsData,
@@ -22,14 +23,7 @@ export default function DashboardClient({
   initialPostsData: { data: Post[]; total: number };
   initialUserPosts: UserPost[];
 }) {
-  const searchParams = useSearchParams();
-
-  const [users, setUsers] = useState<User[]>(initialUsersData.data);
-  const [totalUsers, setTotalUsers] = useState(initialUsersData.total);
-  const [posts, setPosts] = useState<Post[]>(initialPostsData.data);
-  const [totalPosts, setTotalPosts] = useState(initialPostsData.total);
   const [userPosts, setUserPosts] = useState<UserPost[]>(initialUserPosts);
-
   const [activeUsers, setActiveUsers] = useState(
     initialUsersData.data.filter((user: User) => user.status === "active")
       .length
@@ -38,76 +32,214 @@ export default function DashboardClient({
     initialUsersData.data.filter((user: User) => user.gender === "male").length
   );
 
-  const [triggerRefetch, setTriggerRefetch] = useState(false);
+  // USERS table data
+  const searchParams = useSearchParams();
+  const [genderFilter, setGenderFilter] = useState<string | null>(
+    searchParams.get("gender") || null
+  );
+  const [statusFilter, setStatusFilter] = useState<string | null>(
+    searchParams.get("status") || null
+  );
+  const [searchName, setSearchName] = useState<string>(
+    searchParams.get("name") || ""
+  );
 
-  useEffect(() => {
-    const params = {
-      page: Number(searchParams.get("page")) || 1,
-      perPage: Number(searchParams.get("per_page")) || 10,
-      gender: searchParams.get("gender") || "",
-      status: searchParams.get("status") || "",
-      name: searchParams.get("name") || "",
-      title: searchParams.get("title") || "",
+  const currentPage = searchParams.get("page")
+    ? parseInt(searchParams.get("page") || "1")
+    : 1;
+  const currentPerPage = searchParams.get("per_page")
+    ? parseInt(searchParams.get("per_page") || "10")
+    : 10;
+  const [usersTableParams, setUsersTableParams] = useState<TableParams>({
+    pagination: {
+      current: currentPage,
+      pageSize: currentPerPage,
+      total: initialUsersData.total,
+    },
+    filters: {},
+  });
+
+  const fetchUsers = async () => {
+    const params = new URLSearchParams();
+    const page = usersTableParams.pagination.current || 1;
+    const per_page = usersTableParams.pagination.pageSize || 10;
+
+    const paramValues = {
+      page: String(page),
+      per_page: String(per_page),
+      gender: genderFilter ?? "",
+      status: statusFilter ?? "",
+      name: searchName,
     };
 
-    const fetchData = async () => {
-      try {
-        const usersData = await fetchUsersAction(params.page, params.perPage, {
-          gender: params.gender,
-          status: params.status,
-          name: params.name,
-        });
-
-        setUsers(usersData.data);
-        setTotalUsers(usersData.total);
-        setActiveUsers(
-          usersData.data.filter((user: User) => user.status === "active").length
-        );
-        setMaleUsers(
-          usersData.data.filter((user: User) => user.gender === "male").length
-        );
-
-        const postsData = await fetchPostsAction(params.page, params.perPage, {
-          title: params.title,
-        });
-
-        setPosts(postsData.data);
-        setTotalPosts(postsData.total);
-
-        const newUserPosts = await Promise.all(
-          usersData.data.map(async (user: User) => {
-            const { total } = await fetchUserPostsAction(user.id);
-            return {
-              id: user.id,
-              name: user.name.split(" ")[0],
-              value: total,
-            };
-          })
-        );
-
-        setUserPosts(newUserPosts);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+    Object.entries(paramValues).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
       }
+    });
+
+    const users = await fetchUsersAction(page, per_page, {
+      gender: genderFilter ?? "",
+      status: statusFilter ?? "",
+      name: searchName,
+    });
+    setActiveUsers(
+      users.data.filter((user: User) => user.status === "active").length
+    );
+    setMaleUsers(
+      users.data.filter((user: User) => user.gender === "male").length
+    );
+    const userPosts = await Promise.all(
+      initialUsersData.data.map(async (user: User) => {
+        const { total } = await fetchUserPostsAction(user.id);
+        return {
+          id: user.id,
+          name: user.name.split(" ")[0],
+          value: total,
+        };
+      })
+    );
+    setUserPosts(userPosts);
+
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
+
+    return {
+      data: users.data,
+      current: page,
+      pageSize: per_page,
+      total: users.total,
+    };
+  };
+
+  const {
+    data: users,
+    isLoading: isUsersLoading,
+    refetch: usersRefetch,
+  } = useQuery({
+    queryKey: [
+      "users",
+      usersTableParams,
+      genderFilter,
+      statusFilter,
+      searchName,
+    ],
+    queryFn: fetchUsers,
+    initialData: {
+      data: initialUsersData.data,
+      current: currentPage,
+      pageSize: currentPerPage,
+      total: initialUsersData.total,
+    },
+  });
+
+  // POSTS table data
+  const [idFilter, setIdFilter] = useState<string | null>(
+    searchParams.get("id") || null
+  );
+  const [userIdFilter, setUserIdFilter] = useState<string | null>(
+    searchParams.get("user_id") || null
+  );
+  const [searchTitle, setSearchTitle] = useState<string>(
+    searchParams.get("title") || ""
+  );
+
+  const [postsTableParams, setPostsTableParams] = useState<TableParams>({
+    pagination: {
+      current: currentPage,
+      pageSize: currentPerPage,
+      total: initialPostsData.total,
+    },
+    filters: {},
+  });
+  const fetchPosts = async () => {
+    const params = new URLSearchParams();
+    const page = postsTableParams.pagination.current || 1;
+    const per_page = postsTableParams.pagination.pageSize || 10;
+
+    const paramValues = {
+      page: String(page),
+      per_page: String(per_page),
+      title: searchTitle,
+      user_id: userIdFilter,
+      id: idFilter,
     };
 
-    fetchData();
-  }, [triggerRefetch]);
+    Object.entries(paramValues).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      }
+    });
+
+    let posts;
+    if (idFilter) {
+      const singlePost = await fetchPostAction({
+        id: Number(idFilter),
+        method: "get",
+      });
+      posts = {
+        data: singlePost ? [singlePost] : [],
+        total: singlePost ? 1 : 0,
+      };
+    } else {
+      posts = await fetchPostsAction(page, per_page, {
+        title: searchTitle,
+        user_id: userIdFilter ?? "",
+      });
+    }
+
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
+
+    return {
+      data: posts.data,
+      current: page,
+      pageSize: per_page,
+      total: posts.total,
+    };
+  };
+
+  const {
+    data: posts,
+    isLoading: isPostsLoading,
+    refetch: postsRefetch,
+  } = useQuery({
+    queryKey: ["posts", postsTableParams, searchTitle],
+    queryFn: fetchPosts,
+    initialData: {
+      data: initialPostsData.data,
+      current: currentPage,
+      pageSize: currentPerPage,
+      total: initialPostsData.total,
+    },
+  });
 
   return (
     <div>
       <div className="mb-4">
         <h2 className="text-xl font-medium mb-4">Statistic</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatisticCard title="Total User" value={users.length.toString()} />
-          <StatisticCard title="Total Post" value={posts.length.toString()} />
+          <StatisticCard
+            title="Total User"
+            value={users.data.length.toString()}
+          />
+          <StatisticCard
+            title="Total Post"
+            value={posts.data.length.toString()}
+          />
           <StatisticCard
             title="User Status (active/non)"
-            value={`${activeUsers}/${users.length - activeUsers}`}
+            value={`${activeUsers}/${users.data.length - activeUsers}`}
           />
           <StatisticCard
             title="User Gender (m/f)"
-            value={`${maleUsers}/${users.length - maleUsers}`}
+            value={`${maleUsers}/${users.data.length - maleUsers}`}
           />
         </div>
       </div>
@@ -119,25 +251,41 @@ export default function DashboardClient({
         <div className="lg:col-span-1 gap-4 grid grid-row-2">
           <UserStatusChart
             totalActiveUser={activeUsers}
-            totalNonActiveUser={users.length - activeUsers}
-            totalUsers={users.length}
+            totalNonActiveUser={users.data.length - activeUsers}
+            totalUsers={users.data.length}
           />
           <GenderDistributionChart
             totalMaleUsers={maleUsers}
-            totalFemaleUsers={users.length - maleUsers}
-            totalUsers={users.length}
+            totalFemaleUsers={users.data.length - maleUsers}
+            totalUsers={users.data.length}
           />
         </div>
       </div>
 
       <div className="mb-4">
         <TabledData
-          initialUsers={users}
-          initialTotalUsers={totalUsers}
-          initialPosts={posts}
-          initialTotalPosts={totalPosts}
-          triggerRefetch={triggerRefetch}
-          setTriggerRefetch={setTriggerRefetch}
+          users={users}
+          isUsersLoading={isUsersLoading}
+          usersTableParams={usersTableParams}
+          genderFilter={genderFilter}
+          statusFilter={statusFilter}
+          searchName={searchName}
+          setUsersTableParams={setUsersTableParams}
+          setGenderFilter={setGenderFilter}
+          setStatusFilter={setStatusFilter}
+          setSearchName={setSearchName}
+          usersRefetch={usersRefetch}
+          posts={posts}
+          isPostsLoading={isPostsLoading}
+          postsTableParams={postsTableParams}
+          idFilter={idFilter}
+          userIdFilter={userIdFilter}
+          searchTitle={searchTitle}
+          setPostsTableParams={setPostsTableParams}
+          setIdFilter={setIdFilter}
+          setUserIdFilter={setUserIdFilter}
+          setSearchTitle={setSearchTitle}
+          postsRefetch={postsRefetch}
         />
       </div>
     </div>

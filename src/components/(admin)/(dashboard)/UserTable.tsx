@@ -4,126 +4,65 @@ import { Table, Input, Select, Button, Space, Dropdown } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { SelectedData, User } from "@/types";
-import { useRouter, useSearchParams } from "next/navigation";
-import { fetchUsersAction } from "@/server/actions";
+import { useQueryClient } from "@tanstack/react-query";
+import { SelectedData, TableParams, User } from "@/types";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import DeleteModal from "./DeleteModal";
 
 interface UserTableProps {
-  initialData: User[];
-  initialTotal: number;
-  triggerRefetch: boolean;
-  setTriggerRefetch: (value: boolean) => void;
-}
-
-interface TableParams {
-  pagination: TablePaginationConfig;
-  filters: Record<string, FilterValue | null>;
+  users: {
+    data: User[];
+    current: number;
+    pageSize: number;
+    total: number;
+  };
+  isUsersLoading: boolean;
+  usersTableParams: TableParams;
+  genderFilter: string | null;
+  statusFilter: string | null;
+  searchName: string;
+  setUsersTableParams: (params: TableParams) => void;
+  setGenderFilter: (value: string | null) => void;
+  setStatusFilter: (value: string | null) => void;
+  setSearchName: (value: string) => void;
+  usersRefetch: () => void;
 }
 
 const UserTable: React.FC<UserTableProps> = ({
-  initialData = [],
-  initialTotal = 0,
-  triggerRefetch,
-  setTriggerRefetch,
+  users,
+  isUsersLoading,
+  usersTableParams,
+  genderFilter,
+  statusFilter,
+  searchName,
+  setUsersTableParams,
+  setGenderFilter,
+  setStatusFilter,
+  setSearchName,
+  usersRefetch,
 }) => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentPage = searchParams.get("page")
-    ? parseInt(searchParams.get("page") || "1")
-    : 1;
-  const currentPerPage = searchParams.get("per_page")
-    ? parseInt(searchParams.get("per_page") || "10")
-    : 10;
-  const [genderFilter, setGenderFilter] = useState<string | null>(
-    searchParams.get("gender") || null
-  );
-  const [statusFilter, setStatusFilter] = useState<string | null>(
-    searchParams.get("status") || null
-  );
-  const [searchText, setSearchText] = useState<string>(
-    searchParams.get("name") || ""
-  );
-  const [tableParams, setTableParams] = useState<TableParams>({
-    pagination: {
-      current: currentPage,
-      pageSize: currentPerPage,
-      total: initialTotal,
-    },
-    filters: {},
-  });
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedData, setSelectedData] = useState<SelectedData | null>(null);
 
-  const fetchUsers = async () => {
-    const params = new URLSearchParams();
-    const page = tableParams.pagination.current || 1;
-    const per_page = tableParams.pagination.pageSize || 10;
-
-    const paramValues = {
-      page: String(page),
-      per_page: String(per_page),
-      gender: genderFilter ?? "",
-      status: statusFilter ?? "",
-      name: searchText,
-    };
-
-    Object.entries(paramValues).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      }
-    });
-
-    const users = await fetchUsersAction(page, per_page, {
-      gender: genderFilter ?? "",
-      status: statusFilter ?? "",
-      name: searchText,
-    });
-
-    window.history.replaceState(
-      {},
-      "",
-      params.toString() ? `?${params.toString()}` : window.location.pathname
-    );
-    setTriggerRefetch(!triggerRefetch);
-
-    return {
-      data: users.data,
-      current: page,
-      pageSize: per_page,
-      total: users.total,
-    };
-  };
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["users", tableParams, genderFilter, statusFilter, searchText],
-    queryFn: fetchUsers,
-    initialData: {
-      data: initialData,
-      current: currentPage,
-      pageSize: currentPerPage,
-      total: initialTotal,
-    },
-  });
   const handleTableChange = (
     pagination: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
     sorter: SorterResult<User> | SorterResult<User>[]
   ) => {
-    setTableParams({
+    setUsersTableParams({
       pagination: {
         ...pagination,
-        total: data?.total,
+        total: users.total,
       },
       filters,
     });
 
     if (!Array.isArray(sorter) && (!sorter.order || !sorter.column)) {
       setTimeout(() => {
-        refetch();
+        usersRefetch();
       }, 400);
     }
   };
@@ -134,22 +73,22 @@ const UserTable: React.FC<UserTableProps> = ({
     return () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        setTableParams({
-          ...tableParams,
+        setUsersTableParams({
+          ...usersTableParams,
           pagination: {
-            ...tableParams.pagination,
+            ...usersTableParams.pagination,
             current: 1,
           },
         });
-        refetch();
+        usersRefetch();
       }, 400);
     };
-  }, [tableParams, refetch]);
+  }, [usersTableParams, usersRefetch]);
 
   const handleSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = e.target;
-      setSearchText(value);
+      setSearchName(value);
       debouncedFilter();
     },
     [debouncedFilter]
@@ -277,7 +216,7 @@ const UserTable: React.FC<UserTableProps> = ({
           <Space>
             <Input
               placeholder="Search name"
-              value={searchText}
+              value={searchName}
               onChange={handleSearch}
               suffix={<SearchOutlined />}
               className="w-60 md:w-80"
@@ -287,13 +226,13 @@ const UserTable: React.FC<UserTableProps> = ({
         <div className="overflow-x-auto">
           <Table
             columns={columns}
-            dataSource={data?.data}
+            dataSource={users?.data}
             rowKey="id"
-            loading={isLoading}
+            loading={isUsersLoading}
             pagination={{
-              current: data.current,
-              pageSize: data.pageSize,
-              total: data?.total,
+              current: users.current,
+              pageSize: users.pageSize,
+              total: users?.total,
               showSizeChanger: true,
               showTotal: (total, range) => {
                 return `${range[0]}-${range[1]} of ${total} items`;
