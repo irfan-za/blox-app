@@ -5,15 +5,19 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import type { MenuProps } from "antd";
 import { Button, Dropdown, Space } from "antd";
-import { DownOutlined, MenuOutlined } from "@ant-design/icons";
+import { DownOutlined, MenuOutlined, CloseOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api";
 import { User } from "@/types";
 
 export default function AdminNavbar({
   onMenuClick,
+  mobileOpen,
+  setMobileOpen,
 }: {
   onMenuClick: () => void;
+  mobileOpen: boolean;
+  setMobileOpen: (isOpen: boolean) => void;
 }) {
   const items: MenuProps["items"] = [
     {
@@ -46,11 +50,20 @@ export default function AdminNavbar({
     getUser();
   }, []);
 
+  const handleMenuClick = () => {
+    setMobileOpen(!mobileOpen);
+    onMenuClick();
+  };
+
   return (
     <nav className="border-b border-2 border-gray-300 px-4 py-2 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <button onClick={onMenuClick} className="p-2 md:hidden">
-          <MenuOutlined className="text-xl" />
+        <button onClick={handleMenuClick} className="p-2 md:hidden">
+          {mobileOpen ? (
+            <CloseOutlined className="text-xl" />
+          ) : (
+            <MenuOutlined className="text-xl" />
+          )}
         </button>
         <Image src="/images/blox-icon.png" alt="Logo" width={32} height={32} />
         <div className="flex flex-col ml-4">

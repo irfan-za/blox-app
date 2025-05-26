@@ -21,12 +21,12 @@ export default function AdminPanelLayout({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(true);
   const pathname = usePathname();
 
   const handleMenuClick = () => {
+    setCollapsed(mobileOpen ? true : !collapsed);
     setMobileOpen(!mobileOpen);
-    setCollapsed(!collapsed);
   };
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -38,10 +38,33 @@ export default function AdminPanelLayout({
     },
   });
 
+  const MenuLink = ({
+    href,
+    children,
+  }: {
+    href: string;
+    children: React.ReactNode;
+  }) => {
+    return (
+      <Link
+        href={href}
+        onClick={() => {
+          setTimeout(() => setMobileOpen(false), 500);
+        }}
+      >
+        {children}
+      </Link>
+    );
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex flex-col h-svh">
-        <AdminNavbar onMenuClick={handleMenuClick} />
+        <AdminNavbar
+          onMenuClick={handleMenuClick}
+          mobileOpen={mobileOpen}
+          setMobileOpen={setMobileOpen}
+        />
         <Layout>
           <Sider
             theme="light"
@@ -78,7 +101,7 @@ export default function AdminPanelLayout({
                     {
                       key: "dashboard",
                       icon: <LayoutOutlined />,
-                      label: <Link href="/">Dashboard</Link>,
+                      label: <MenuLink href="/">Dashboard</MenuLink>,
                     },
                   ]}
                 />
@@ -105,12 +128,20 @@ export default function AdminPanelLayout({
                     {
                       key: "create-user",
                       icon: <UserOutlined />,
-                      label: <Link href="/users/create-user">Create User</Link>,
+                      label: (
+                        <MenuLink href="/users/create-user">
+                          Create User
+                        </MenuLink>
+                      ),
                     },
                     {
                       key: "create-post",
                       icon: <FormOutlined />,
-                      label: <Link href="/posts/create-post">Create Post</Link>,
+                      label: (
+                        <MenuLink href="/posts/create-post">
+                          Create Post
+                        </MenuLink>
+                      ),
                     },
                   ]}
                 />
