@@ -90,7 +90,7 @@ export default function DashboardClient({
       users.data.filter((user: User) => user.gender === "male").length
     );
     const userPosts = await Promise.all(
-      initialUsersData.data.map(async (user: User) => {
+      users.data.map(async (user: User) => {
         const { total } = await fetchUserPostsAction(user.id);
         return {
           id: user.id,
@@ -134,6 +134,8 @@ export default function DashboardClient({
       pageSize: currentPerPage,
       total: initialUsersData.total,
     },
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
   // POSTS table data
@@ -218,6 +220,8 @@ export default function DashboardClient({
       pageSize: currentPerPage,
       total: initialPostsData.total,
     },
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
   return (
