@@ -47,8 +47,9 @@ export default function UserForm({ id }: { id: string }) {
       messageApi.open({
         type: "error",
         content:
-          error instanceof Error && error.message.includes("422")
-            ? "Email already exists, please use a different email."
+          error instanceof Error
+            ? // && error.message.includes("422")
+              "Email already exists, please use a different email."
             : "Failed to save user data. Please try again.",
       });
     },

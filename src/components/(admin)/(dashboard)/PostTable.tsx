@@ -1,13 +1,13 @@
 "use client";
-import React, { useCallback, useMemo, useState } from "react";
-import { Table, Input, Button, Space, Dropdown } from "antd";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Table, Input, Button, Space, Dropdown, Select } from "antd";
 import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SelectedData } from "@/types";
-import { fetchPostsAction } from "@/server/actions";
+import { fetchPostAction, fetchPostsAction } from "@/server/actions";
 import DeleteModal from "./DeleteModal";
 
 interface Post {
@@ -40,9 +40,21 @@ const PostTable: React.FC<PostTableProps> = ({
   const currentPerPage = searchParams.get("per_page")
     ? parseInt(searchParams.get("per_page") || "10")
     : 10;
+  const [idFilter, setIdFilter] = useState<string | null>(
+    searchParams.get("id") || null
+  );
+  const [userIdFilter, setUserIdFilter] = useState<string | null>(
+    searchParams.get("user_id") || null
+  );
   const [searchText, setSearchText] = useState<string>(
     searchParams.get("title") || ""
   );
+  const [idOptions, setIdOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [userIdOptions, setUserIdOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
       current: currentPage,
@@ -63,6 +75,8 @@ const PostTable: React.FC<PostTableProps> = ({
       page: String(page),
       per_page: String(per_page),
       title: searchText,
+      user_id: userIdFilter,
+      id: idFilter,
     };
 
     Object.entries(paramValues).forEach(([key, value]) => {
@@ -71,9 +85,22 @@ const PostTable: React.FC<PostTableProps> = ({
       }
     });
 
-    const posts = await fetchPostsAction(page, per_page, {
-      title: searchText,
-    });
+    let posts;
+    if (idFilter) {
+      const singlePost = await fetchPostAction({
+        id: Number(idFilter),
+        method: "get",
+      });
+      posts = {
+        data: singlePost ? [singlePost] : [],
+        total: singlePost ? 1 : 0,
+      };
+    } else {
+      posts = await fetchPostsAction(page, per_page, {
+        title: searchText,
+        user_id: userIdFilter ?? "",
+      });
+    }
 
     window.history.replaceState(
       {},
@@ -145,6 +172,44 @@ const PostTable: React.FC<PostTableProps> = ({
     },
     [debouncedFilter]
   );
+  useEffect(() => {
+    if (data) {
+      const uniqueIds = new Set<string>();
+      const idOptions = data.data.reduce(
+        (acc: { value: string; label: string }[], post: Post) => {
+          const id = post.id.toString();
+          if (!uniqueIds.has(id)) {
+            uniqueIds.add(id);
+            acc.push({
+              value: id,
+              label: `#${id}`,
+            });
+          }
+          return acc;
+        },
+        []
+      );
+
+      const uniqueUserIds = new Set<string>();
+      const userIdOptions = data.data.reduce(
+        (acc: { value: string; label: string }[], post: Post) => {
+          const userId = post.user_id.toString();
+          if (!uniqueUserIds.has(userId)) {
+            uniqueUserIds.add(userId);
+            acc.push({
+              value: userId,
+              label: userId,
+            });
+          }
+          return acc;
+        },
+        []
+      );
+
+      setIdOptions(idOptions);
+      setUserIdOptions(userIdOptions);
+    }
+  }, [data]);
 
   const columns: ColumnsType<Post> = [
     {
@@ -224,7 +289,31 @@ const PostTable: React.FC<PostTableProps> = ({
   return (
     <>
       <div className="bg-background rounded-lg p-3 md:p-6 shadow-sm">
-        <div className="mb-4 flex flex-wrap gap-4 justify-between">
+        <div className="mb-4 flex flex-wrap flex-col md:flex-row gap-4 justify-between">
+          <div className="flex flex-wrap gap-4">
+            <Select
+              placeholder="ID"
+              value={idFilter}
+              onChange={(value) => {
+                setIdFilter(value);
+                debouncedFilter();
+              }}
+              allowClear
+              className="w-28 md:w-32"
+              options={idOptions}
+            />
+            <Select
+              placeholder="User ID"
+              value={userIdFilter}
+              onChange={(value) => {
+                setUserIdFilter(value);
+                debouncedFilter();
+              }}
+              allowClear
+              className="w-28 md:w-32"
+              options={userIdOptions}
+            />
+          </div>
           <Space>
             <Input
               placeholder="Search title"

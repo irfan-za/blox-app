@@ -67,6 +67,7 @@ export async function fetchPostsAction(
   per_page: number,
   query: {
     title: string;
+    user_id: string;
   }
 ) {
   return await postsApi.getPosts({
@@ -74,6 +75,7 @@ export async function fetchPostsAction(
     per_page: per_page || 10,
     query: {
       title: query.title,
+      user_id: query.user_id,
     },
   });
 }
