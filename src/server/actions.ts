@@ -7,7 +7,7 @@ import { Post, User } from "@/types";
 
 export const createGoRestApiClient = async () => {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("ACCESS_TOKEN")?.value;
+  const accessToken = cookieStore.get("NEXT_PUBLIC_ACCESS_TOKEN")?.value;
 
   return axios.create({
     baseURL: process.env.API_URL,

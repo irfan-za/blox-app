@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const cookieStore = await cookies();
-    cookieStore.set("ACCESS_TOKEN", accessToken, {
+    cookieStore.set("NEXT_PUBLIC_ACCESS_TOKEN", accessToken, {
       expires: cookieExpiry,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

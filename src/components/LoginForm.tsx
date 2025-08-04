@@ -53,6 +53,7 @@ export default function LoginForm() {
               Email <span className="text-red-500">*</span>
             </span>
           }
+          initialValue={process.env.NEXT_PUBLIC_EMAIL || ""}
           name="email"
           rules={[
             {
@@ -75,6 +76,7 @@ export default function LoginForm() {
               Access Token <span className="text-red-500">*</span>
             </span>
           }
+          initialValue={process.env.NEXT_PUBLIC_ACCESS_TOKEN || ""}
           name="accessToken"
           rules={[
             {

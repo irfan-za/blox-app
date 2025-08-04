@@ -180,9 +180,8 @@ blox-app/
    - Obtain a GoRest access token from [https://gorest.co.in](https://gorest.co.in) (login required).
    - Add the following variables to your `.env` file:
      ```
-     GOREST_ACCESS_TOKEN=your_access_token_here
-     ACCESS_TOKEN=your-access-token
-     EMAIL=your-email
+     NEXT_PUBLIC_ACCESS_TOKEN=your-access-token
+     NEXT_PUBLIC_EMAIL=your-email
      API_URL=https://gorest.co.in/public/v2
      WEBSITE_URL=http://localhost:3000
      ```

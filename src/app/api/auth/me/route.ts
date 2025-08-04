@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("ACCESS_TOKEN")?.value;
+  const accessToken = cookieStore.get("NEXT_PUBLIC_ACCESS_TOKEN")?.value;
   const users = await axios
-    .get(`${process.env.API_URL}/users/7910391`, {
+    .get(`${process.env.API_URL}/users/${process.env.USER_ID}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

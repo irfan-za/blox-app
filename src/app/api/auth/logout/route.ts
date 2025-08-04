@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const cookieStore = await cookies();
-  cookieStore.delete("ACCESS_TOKEN");
+  cookieStore.delete("NEXT_PUBLIC_ACCESS_TOKEN");
   return NextResponse.json(
     { success: true, message: "Logout successful" },
     { status: 200 }
